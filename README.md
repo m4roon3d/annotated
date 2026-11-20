@@ -12,6 +12,14 @@ Turns a YouTube tutorial into a study guide you keep. You get the core idea, wha
 | `docs/HANDOVER.md` | Architecture, data schema, analysis pipeline and roadmap. |
 | `docs/saas_blueprint.md` | Commercial plan and pricing. |
 
+## Live
+
+- App: https://m4roon3d.github.io/annotated/
+- Landing page: https://m4roon3d.github.io/annotated/landing.html
+- Extension download: https://m4roon3d.github.io/annotated/annotated-extension.zip
+
+Every push to `main` redeploys the site through `.github/workflows/pages.yml`.
+
 ## Run it
 
 Open `index.html` in a browser, or serve the folder:
@@ -23,12 +31,10 @@ python3 -m http.server 8000
 
 Add a Gemini API key from [Google AI Studio](https://aistudio.google.com) under the settings at the bottom left. The key is stored only in your browser. Without a key, you can still paste a transcript for a basic extraction.
 
-## Before deploying
+## Configuration
 
-Set these values to your deployed URLs:
-
-- `APP_BASE` in `extension/content.js` and `extension/popup.js`
-- `APP_URL` and `WAITLIST_ENDPOINT` in `landing.html`
+- `APP_BASE` in `extension/content.js` and `extension/popup.js` points at the GitHub Pages app. Change both if you move to your own domain.
+- `WAITLIST_ENDPOINT` in `landing.html` is empty until you connect a form service.
 
 ## Load the extension locally
 
