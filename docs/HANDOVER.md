@@ -51,6 +51,12 @@ Two source modes, remembered per browser (`td_ask_mode`, default `web`):
 - **This video:** answers only from the transcript and analysis; says so when the video doesn't cover something.
 - **Video + web:** adds `tools: [{ google_search: {} }]`. The video is context, not a limit. Sources come from `groundingMetadata.groundingChunks` and are shown under each answer.
 
+Suggested questions are specific to each video:
+- **New analyses** store `questions.video` and `questions.web` from the extraction pass.
+- **Older videos** get them from one small Gemini call the first time the Ask tab opens; they're then saved.
+- **Without a key**, questions are built from the video's insights, commands and links (`localQuestions`).
+- **After each answer**, Gemini adds a "Follow-ups:" line, which is removed from the answer text and shown as chips (`splitFollowups`).
+
 Answers are Markdown, rendered by `renderMarkdown()`. It escapes everything first, then handles headings, bold and italics, lists, inline code, fenced code blocks (with Copy buttons), http(s) links and `[MM:SS]` timestamps.
 
 The API key is sent in the `x-goog-api-key` header. The available model list is loaded from `GET /v1beta/models`.
