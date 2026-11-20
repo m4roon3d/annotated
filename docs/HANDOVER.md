@@ -16,6 +16,13 @@ Removed in v2: knowledge graph, clips and highlight reel, audio brief, lens call
 - `landing.html`: marketing page. Set `APP_URL` and `WAITLIST_ENDPOINT` at the bottom.
 - `extension/`: MV3 extension. Set `APP_BASE` in `content.js` and `popup.js`.
 
+## Layout and shortcuts
+- **Left:** the library (thumbnails, search, delete with Undo). Hide it with the button in its header or `[`. On phones it's a drawer that closes with its button, a tap outside, or Esc.
+- **Centre:** the reading column. The sticky top bar shows the video title once you scroll. Tabs show live counts: insights, playbook progress, cards due.
+- **Right:** player, notes and chapters. Hide it with `]`; clicking any timestamp brings it back. Under 1180px it moves into the column above the title.
+- **Other shortcuts:** Ctrl/Cmd+K opens the command palette. In review, Space reveals the answer and 1–4 grade the card.
+- Panel state is remembered in `td_rail_off` and `td_side_off`.
+
 ## Analysis pipeline (`analyzeVideo`)
 1. Metadata comes from YouTube oEmbed, with noembed as a fallback.
 2. **Extraction pass.** The transcript is sent if one was given; otherwise the video URL goes in as `file_data`. Output is JSON mode with a fixed schema, plus `researchTopics`. On a parse failure it retries once. No web access in this pass.
