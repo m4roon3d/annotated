@@ -351,6 +351,38 @@ dialog[open]::backdrop { animation: fadeIn 0.2s ease-out; }
 .wave i { width: 3px; height: 100%; border-radius: 2px; background: currentColor; transform-origin: center; animation: wave 0.9s ease-in-out infinite; }
 .wave i:nth-child(2) { animation-delay: 0.12s; } .wave i:nth-child(3) { animation-delay: 0.24s; } .wave i:nth-child(4) { animation-delay: 0.36s; } .wave i:nth-child(5) { animation-delay: 0.48s; }
 .hf-status { display: flex; align-items: center; }
+.kind-chip { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 10px; background: var(--sunk); color: var(--muted); margin-top: 12px; }
+.kind-chip.k-idea { color: var(--link); background: color-mix(in srgb, var(--link) 12%, transparent); }
+.kind-chip.k-who { color: var(--ok); background: color-mix(in srgb, var(--ok) 12%, transparent); }
+.kind-chip.k-apply { color: var(--hl-ink); background: color-mix(in srgb, var(--hl) 60%, transparent); }
+.review .kind-chip { align-self: flex-start; }
+.review .kind-chip + .qtext { margin-top: 8px; }
+#lib-label { white-space: nowrap; }
+.a-lead { font-weight: 600; font-family: var(--ui); font-size: 15px; }
+.skip-card { align-self: center; margin-top: 12px; font-weight: 500; font-size: 13px; }
+.switch-row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--rule); border-radius: var(--r-md); background: var(--surface); margin: 6px 0 16px; cursor: pointer; }
+.switch-row input { appearance: none; width: 36px; height: 20px; border-radius: 10px; background: var(--rule); position: relative; flex-shrink: 0; margin-top: 2px; cursor: pointer; transition: background 0.2s; }
+.switch-row input::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: transform 0.2s; }
+.switch-row input:checked { background: var(--ok); }
+.switch-row input:checked::after { transform: translateX(16px); }
+.cards-manage { margin: 16px 0 0; }
+.cards-manage summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--muted); padding: 6px 0; }
+.card-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-top: 1px solid var(--rule); font-size: 14px; }
+.card-row input { margin-top: 3px; accent-color: var(--ok); }
+.card-row .kind-chip { margin: 0 4px 0 0; }
+.lib-group-select { font-size: 12px; border: 0; background: transparent; color: var(--muted); padding: 2px; border-radius: 4px; cursor: pointer; }
+.lib-group-select:hover { color: var(--ink); background: var(--sunk); }
+.btn-xs { width: 28px; height: 28px; }
+.libhead { gap: 2px; }
+.libgroup { margin-bottom: 4px; }
+.libgroup-head { display: flex; align-items: center; }
+.libgroup-head:hover .lib-del, .libgroup-head:focus-within .lib-del { opacity: 1; }
+.libgroup-toggle { flex: 1; display: flex; align-items: center; gap: 6px; padding: 6px; font-size: 12.5px; font-weight: 600; color: var(--muted); border-radius: 6px; text-align: left; min-width: 0; }
+.libgroup-toggle:hover { color: var(--ink); }
+.libgroup-toggle svg.lucide { width: 14px; height: 14px; transition: transform 0.15s; }
+.libgroup.closed .libgroup-toggle svg.lucide { transform: rotate(-90deg); }
+.g-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.g-n { font-weight: 500; color: var(--faint); font-variant-numeric: tabular-nums; }
 .toast-act { color: var(--hl); font-weight: 700; padding: 4px 8px; border-radius: 6px; }
 .toast-act:hover { background: rgba(255,255,255,0.1); }
 .toast[hidden] { display: none; }
@@ -417,7 +449,11 @@ dialog[open]::backdrop { animation: fadeIn 0.2s ease-out; }
     </div>
     <div class="libhead">
       <span id="lib-label">Library</span>
-      <button class="btn btn-quiet btn-sm" id="btn-compare" data-action="toggle-compare">Compare</button>
+      <span style="flex:1"></span>
+      <label class="sr" for="lib-group">Group library by</label>
+      <select id="lib-group" class="lib-group-select" title="Group library by"><option value="collection">Collections</option><option value="type">Types</option><option value="recent">Recent</option></select>
+      <button class="btn btn-quiet btn-icon btn-xs" data-action="organize" title="Organize library into collections" aria-label="Organize library into collections"><i data-lucide="sparkles"></i></button>
+      <button class="btn btn-quiet btn-sm" id="btn-compare" data-action="toggle-compare">Select</button>
     </div>
     <div class="liblist" id="lib-list"></div>
     <div class="rail-block" id="compare-bar" hidden>
@@ -459,7 +495,7 @@ dialog[open]::backdrop { animation: fadeIn 0.2s ease-out; }
       <h1 class="vh-title" id="v-title"></h1>
       <div class="vh-meta">
         <span class="by" id="v-channel"></span>
-        <label class="tag-field"><i data-lucide="tag"></i><span class="sr">Collection</span><input class="tag-input" id="v-topic" placeholder="Add to a collection" /></label>
+        <label class="tag-field"><i data-lucide="tag"></i><span class="sr">Collection</span><input class="tag-input" id="v-topic" placeholder="Add to a collection" list="collections-list" /><datalist id="collections-list"></datalist></label>
         <span id="v-kind"></span>
         <span id="v-source"></span>
       </div>
@@ -593,6 +629,9 @@ dialog[open]::backdrop { animation: fadeIn 0.2s ease-out; }
       </label>
       <label class="f">Gemini voice
         <select class="input" id="s-voice-name"></select>
+      </label>
+      <label class="f">New flashcards per day <small>Keeps Today's review from piling up. Cards already in progress still come back when due.</small>
+        <input class="input" id="s-new-per-day" type="number" min="1" max="50" style="width:120px" />
       </label>
       <div class="status" id="s-status" role="status"></div>
       <div class="dlg-foot">
@@ -762,6 +801,7 @@ const state = {
   compareMode: false, compareSel: new Set(), insightFilter: 'all', linkFilter: 'all',
   playerTime: null, session: null, busy: false, queue: [], pendingKnown: null, combinedMd: '',
   voice: 'browser', voiceName: 'Kore', handsFree: null, recap: null, spokenAsk: false,
+  retainOff: {}, newPerDay: 10, libGroup: 'collection', collapsed: {},
 };
 const DEFAULT_MODELS = ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-pro-preview', 'gemini-4-argon'];
 const CONTENT_TYPES = ['Tutorial', 'Talk', 'Podcast', 'Interview', 'Explainer', 'Review', 'News', 'Short tip', 'Other'];
@@ -796,7 +836,7 @@ function normalizeVideo(raw) {
     contentType: CONTENT_TYPES.includes(v.contentType) ? v.contentType : '', isShort: !!v.isShort,
     durationSeconds: Number.isFinite(Number(v.durationSeconds)) && Number(v.durationSeconds) > 0 ? Math.round(Number(v.durationSeconds)) : null,
     speakers: arr(v.speakers).map((x) => str(x, 80)).filter(Boolean).slice(0, 8),
-    recapScript: str(v.recapScript, 6000),
+    recapScript: str(v.recapScript, 6000), topicByUser: !!v.topicByUser,
     sourceLabel: str(v.sourceLabel, 120), analyzedAt: v.analyzedAt || null, sample: !!v.sample,
     model: str(v.model, 60), notesOnSource: arr(v.notesOnSource).map((n) => str(n, 300)).filter(Boolean),
     coreThesis: str(v.coreThesis, 800), summary: str(v.summary, 3000),
@@ -813,7 +853,7 @@ function normalizeVideo(raw) {
     quotes: arr(v.quotes).map((q) => ({ text: str(q.text, 500).replace(/^["“]|["”]$/g, ''), verified: q.verified === true ? true : q.verified === false ? false : null, ...withTs(q) })).filter((q) => q.text),
     chapters: arr(v.chapters).map((c) => ({ title: str(c.title, 160), summary: str(c.summary, 400), ...withTs(c) })).filter((c) => c.title),
     transcript,
-    flashcards: arr(v.flashcards).map((c) => ({ q: str(c.q, 500), a: str(c.a, 1200), ...withTs(c) })).filter((c) => c.q && c.a),
+    flashcards: arr(v.flashcards).map((c) => ({ kind: ['fact', 'idea', 'who', 'apply'].includes(c.kind) ? c.kind : 'fact', q: str(c.q, 500), a: str(c.a, 1200), ...withTs(c) })).filter((c) => c.q && c.a),
     quiz: arr(v.quiz).map((q) => ({ q: str(q.q, 400), options: arr(q.options).map((o) => str(o, 200)).filter(Boolean).slice(0, 6), answer: Number(q.answer), explain: str(q.explain, 500) }))
       .filter((q) => q.q && q.options.length >= 2 && Number.isInteger(q.answer) && q.answer >= 0 && q.answer < q.options.length),
   };
@@ -914,7 +954,8 @@ const SAMPLES = [
     transcript: [],
     flashcards: [
       { q: 'Roughly how large are 70B-parameter weights in FP16?', a: 'About 140 GB — 70 billion × 2 bytes.', timestamp: '01:40' },
-      { q: 'In the LLM-OS analogy, what plays the role of RAM?', a: 'The context window.', timestamp: '42:00' },
+      { kind: 'idea', q: 'In the LLM-OS analogy, what plays the role of RAM?', a: 'The context window.', timestamp: '42:00' },
+      { kind: 'apply', q: 'Where could you treat an LLM as an operating system in your own work?', a: 'Pick a workflow where the model coordinates tools (search, code, files) instead of answering in one shot, and give it explicit memory.' },
     ],
     quiz: [{ q: 'Why are LLMs vulnerable to prompt injection?', options: ['They are trained on code', 'Instructions and untrusted data share the same token stream', 'They have small context windows', 'They run on GPUs'], answer: 1, explain: 'The model can\'t reliably tell instructions apart from data it reads.' }],
   },
@@ -1054,15 +1095,16 @@ const EXTRACT_SCHEMA = `{
 "links": [{"title": "", "url": "https://…", "type": "Repo|Docs|Tool|Paper|Resource", "context": "why it was mentioned", "origin": "description|spoken|video"}],
 "quotes": [{"text": "verbatim words", "timestamp": "MM:SS"}],
 "chapters": [{"timestamp": "MM:SS", "title": "", "summary": ""}],
-"flashcards": [{"q": "", "a": "", "timestamp": "MM:SS"}],
+"flashcards": [{"kind": "fact|idea|who|apply", "q": "", "a": "", "timestamp": "MM:SS"}],
 "quiz": [{"q": "", "options": ["", "", "", ""], "answer": 0, "explain": ""}],
 "researchTopics": ["things worth checking on today's web: tool versions, deprecations, pricing, official docs"]
 }`;
 
 async function extractPass({ id, url, meta, transcriptText, description, isShort, duration }) {
+  const existingCollections = collectionNames();
   const sizes = isShort
-    ? '- This is a short video, so keep it compact: 1-3 insights, 0-3 playbook items, 0-1 shifts, 0-1 quotes, 1-3 flashcards, 0-1 quiz questions, no chapters, and frameworks only if one is stated.'
-    : `- 4-8 insights, 3-8 playbook items, 2-4 shifts, 2-4 quotes, 6-10 flashcards, 4-6 quiz questions.${duration > 2700 ? ' This is a long video: use up to 12 insights and 12 flashcards, and chapters every 5-10 minutes.' : ''}`;
+    ? '- This is a short video, so keep it compact: 1-3 insights, 0-3 playbook items, 0-1 shifts, 0-1 quotes, 1 flashcard, 0-1 quiz questions, no chapters, and frameworks only if one is stated.'
+    : `- 4-8 insights, 3-8 playbook items, 2-4 shifts, 2-4 quotes, 4-6 quiz questions.${duration > 2700 ? ' This is a long video: use up to 12 insights, and chapters every 5-10 minutes.' : ''}`;
   const prompt = `You are building a study guide from a YouTube video for a curious, busy learner.
 Video: ${url}${meta.title ? `\nTitle: ${meta.title}` : ''}${meta.author_name ? `\nChannel: ${meta.author_name}` : ''}${duration ? `\nLength: ${fmtTs(duration)}` : ''}
 ${description ? `\nCreator's description:\n${description.slice(0, 12000)}\n` : ''}${transcriptText ? `\nTranscript (timestamps in brackets):\n${transcriptText}\n` : ''}
@@ -1078,7 +1120,13 @@ Rules:
 - "code": copy commands, code and config exactly as shown or spoken. Empty array if none.
 - "links": every URL in the description plus anything the speaker names that has a findable URL. Never invent URLs.
 - "quotes": exact words only.
-${sizes}
+- "flashcards": only things worth remembering a month from now. Fewer, better cards beat many. Match the card kind to the video:
+  Tutorial: up to 10 "fact" cards on steps, commands, settings and gotchas.
+  Podcast or Interview: up to 8 cards. Use "idea" cards for the main arguments and "who" cards for who argued what or what they recommended (books, tools, people).
+  Talk or Explainer: up to 8 "idea" cards plus 1-2 "apply" cards. An apply card asks where the learner could use the idea (e.g. "Where could you use X this week?"), and its answer suggests one concrete way.
+  Review or News: at most 1 card, and none if nothing will matter in a month.
+  Short tip: 1 card.
+${existingCollections.length ? `- "topic": put the video in one of these existing collections if one fits: ${existingCollections.map((c) => `"${c}"`).join(', ')}. Otherwise name a new one in 1-3 words.\n` : ''}${sizes}
 Return only JSON in this shape:
 ${EXTRACT_SCHEMA}`;
   const parts = [];
@@ -1245,7 +1293,7 @@ function seek(sec) {
 const tsBtn = (item) => (item && item.seconds != null ? `<button class="ts" data-seek="${item.seconds}" title="Play from ${esc(item.timestamp)}"><i data-lucide="play"></i>${esc(item.timestamp)}</button>` : '');
 
 /* ============================== Spaced repetition (SM-2) ============================== */
-const NEW_PER_DAY = 20;
+const newPerDay = () => state.newPerDay || 10;
 const cardKey = (vid, card) => `${vid}:${hash(card.q)}`;
 function schedule(rec, grade) { // grade: 1 again, 3 hard, 4 good, 5 easy
   const r = rec ? { ...rec } : { reps: 0, interval: 0, ease: 2.5, lapses: 0 };
@@ -1271,11 +1319,15 @@ function allCards(scopeVid = null) {
   }
   return out;
 }
+// Cards that take part in review: not suspended, and (for the daily queue) from videos kept in review.
+function activeCards(scopeVid = null) {
+  return allCards(scopeVid).filter((c) => !c.rec?.suspended && (scopeVid || !state.retainOff[c.video.id]));
+}
 function dueQueue(scopeVid = null) {
   const now = Date.now(), log = state.reviewLog[todayKey()] || { reviewed: 0, newSeen: 0 };
-  const cards = allCards(scopeVid);
+  const cards = activeCards(scopeVid);
   const due = cards.filter((c) => c.rec && c.rec.due <= now).sort((a, b) => a.rec.due - b.rec.due);
-  const fresh = cards.filter((c) => !c.rec).slice(0, Math.max(0, NEW_PER_DAY - log.newSeen));
+  const fresh = cards.filter((c) => !c.rec).slice(0, Math.max(0, newPerDay() - log.newSeen));
   return [...due, ...fresh];
 }
 function updateDueBadge() {
@@ -1286,7 +1338,7 @@ function startSession(scope) {
   state.session = { scope, queue: dueQueue(scope === 'all' ? null : scope).map((c) => c.key), revealed: false, practice: false };
 }
 function startPractice(vid) {
-  state.session = { scope: vid, queue: allCards(vid).map((c) => c.key), revealed: false, practice: true };
+  state.session = { scope: vid, queue: activeCards(vid).map((c) => c.key), revealed: false, practice: true };
 }
 function renderReview(containerId) {
   const box = $(containerId), s = state.session;
@@ -1306,12 +1358,29 @@ function renderReview(containerId) {
     <div class="meta"><span>${s.queue.length} left</span>${s.scope === 'all' ? `<button class="btn btn-quiet btn-sm" data-action="open-video" data-vid="${esc(c.video.id)}">${esc(c.video.title)}</button>` : ''}${tsBtn(c.card)}${c.rec ? '' : '<span class="origin">New</span>'}
       <button class="btn btn-sm hf-btn ${state.handsFree === containerId ? 'on' : ''}" data-action="hands-free" data-box="${containerId}" aria-pressed="${state.handsFree === containerId}" title="Read cards aloud and grade by voice"><i data-lucide="${state.handsFree === containerId ? 'square' : 'headphones'}"></i>${state.handsFree === containerId ? 'Stop hands-free' : 'Hands-free'}</button></div>
     ${state.handsFree === containerId ? '<div class="hf-status" role="status" aria-live="polite"></div>' : ''}
+    ${KIND_LABEL[c.card.kind] ? `<div class="kind-chip k-${c.card.kind}">${KIND_LABEL[c.card.kind]}</div>` : ''}
     <div class="qtext">${esc(c.card.q)}</div>
-    ${s.revealed ? `<div class="atext">${esc(c.card.a)}</div>
+    ${s.revealed ? `<div class="atext">${c.card.kind === 'apply' ? '<span class="a-lead">One way to use it: </span>' : ''}${esc(c.card.a)}</div>
       <div class="grades">${[[1, 'Again'], [3, 'Hard'], [4, 'Good'], [5, 'Easy']].map(([g, l]) => `<button class="grade" data-action="grade" data-grade="${g}" data-box="${containerId}">${l}<small>${s.practice ? '&nbsp;' : intervalLabel(c.rec, g)}</small></button>`).join('')}</div>`
       : `<div class="grades" style="grid-template-columns:1fr"><button class="btn btn-primary" data-action="reveal" data-box="${containerId}">Show answer <span style="opacity:.6;font-weight:400">Space</span></button></div>`}
+    <button class="btn btn-quiet btn-sm skip-card" data-action="suspend-card" data-box="${containerId}" title="Stop showing this card in review"><i data-lucide="eye-off"></i>Don't show this card again</button>
   </div>`;
   icons();
+}
+const KIND_LABEL = { idea: 'Idea', who: 'Who said it', apply: 'Apply it' };
+function suspendCurrent(boxId) {
+  const s = state.session; if (!s || !s.queue.length) return;
+  const key = s.queue.shift(); s.seq = (s.seq || 0) + 1; s.revealed = false;
+  const prev = state.srs[key];
+  state.srs[key] = { ...(prev || { reps: 0, interval: 0, ease: 2.5, lapses: 0 }), suspended: true }; persist('srs');
+  if (state.handsFree === boxId) stopSpeaking();
+  renderReview(boxId); updateDueBadge(); if (state.current) { updateTabCounts(); renderCardManager(); }
+  if (state.view === 'today') renderTodayStats();
+  toast("Card removed from review", 6000, { label: 'Undo', run: () => {
+    if (prev) state.srs[key] = prev; else delete state.srs[key];
+    persist('srs'); s.queue.unshift(key); s.seq++; renderReview(boxId); updateDueBadge(); renderCardManager(); if (state.view === 'today') renderTodayStats();
+  } });
+  if (state.handsFree === boxId) { const run = ++hfRun; setTimeout(() => handsFreeStep(boxId, run), 250); }
 }
 function gradeCard(grade, boxId) {
   const s = state.session; if (!s || !s.queue.length) return;
@@ -1462,6 +1531,7 @@ function listenOnce(timeoutMs = 7000) {
 function gradeFromSpeech(heard) {
   if (!heard) return null;
   if (/\b(stop|pause|quit|exit)\b/.test(heard)) return 'stop';
+  if (/\b(skip|remove|never|don't show)\b/.test(heard)) return 'skip';
   if (/\b(repeat|say again|say that again|what)\b/.test(heard)) return 'repeat';
   if (/\b(again|forgot|no idea|wrong|missed)\b/.test(heard)) return 1;
   if (/\b(hard|difficult|tough)\b/.test(heard)) return 3;
@@ -1513,6 +1583,7 @@ async function handsFreeStep(boxId, run) {
     const g = gradeFromSpeech(await listenOnce()); if (!alive()) return;
     if (g === 'stop') { stopHandsFree(); return; }
     if (g === 'repeat') { handsFreeStep(boxId, run); return; }
+    if (g === 'skip') { suspendCurrent(boxId); return; }
     if (g) { gradeCard(g, boxId); return; }
     if (attempt === 0) { setHfStatus(boxId, "Didn't catch that."); await speak('Say again, hard, good, or easy.'); if (!alive()) return; }
   }
@@ -1626,7 +1697,7 @@ function showToday() {
 }
 function renderTodayStats() {
   const log = state.reviewLog[todayKey()] || { reviewed: 0 };
-  const cards = allCards();
+  const cards = activeCards();
   const learned = cards.filter((c) => c.rec && c.rec.interval >= 21).length;
   $('today-stats').innerHTML = [
     [dueQueue().length, 'due now'], [log.reviewed, 'reviewed today'], [cards.length, 'cards in library'], [learned, 'remembered for 3+ weeks'],
@@ -1646,6 +1717,7 @@ function renderVideo() {
   $('v-title').textContent = v.title;
   $('v-channel').textContent = v.channel;
   $('v-topic').value = v.topic || '';
+  $('collections-list').innerHTML = collectionNames().map((c) => `<option value="${esc(c)}"></option>`).join('');
   $('v-open').href = v.url;
   $('v-kind').innerHTML = [v.isShort ? 'Short' : v.contentType, v.durationSeconds ? fmtTs(v.durationSeconds) : ''].filter(Boolean).map((x) => `<span class="origin video">${esc(x)}</span>`).join(' ');
   $('v-source').innerHTML = v.sourceLabel ? `<span class="origin">${esc(v.sourceLabel)}</span>` : '';
@@ -1759,14 +1831,15 @@ function renderAct() {
 }
 
 function renderRetain() {
-  const v = state.current, cards = allCards(v.id), due = dueQueue(v.id).length;
+  const v = state.current, cards = allCards(v.id), due = dueQueue(v.id).length, active = activeCards(v.id).length;
   const ans = state.quiz[v.id] || {};
   const answered = Object.keys(ans).length, right = v.quiz.filter((q, i) => ans[i] === q.answer).length;
   $('panel-retain').innerHTML = `
     <h2 class="sec">Flashcards</h2>
-    <p class="sec-note">${cards.length} cards from this video, ${due} due now. They also appear in Today's review alongside your other videos.</p>
+    <label class="switch-row"><input type="checkbox" role="switch" data-action="retain-toggle" ${state.retainOff[v.id] ? '' : 'checked'} /><span><strong>Include in Today's review</strong><br><span class="sec-note" style="margin:0" id="retain-count"></span></span></label>
     <div id="video-review"></div>
-    ${v.quiz.length ? `<h2 class="sec">Check yourself</h2><p class="sec-note">${answered ? `${right} of ${v.quiz.length} right` : `${v.quiz.length} questions`}${answered ? ` <button class="btn btn-quiet btn-sm" data-action="reset-quiz">Start over</button>` : ''}</p>
+    ${cards.length ? `<details class="cards-manage"><summary id="cards-manage-sum"></summary><div id="cards-manage-list"></div></details>` : ''}
+    ${v.quiz.length ? `<h2 class="sec">Check yourself</h2><p class="sec-note">${answered ? `${right} of ${v.quiz.length} right` : `${v.quiz.length} question${v.quiz.length === 1 ? '' : 's'}`}${answered ? ` <button class="btn btn-quiet btn-sm" data-action="reset-quiz">Start over</button>` : ''}</p>
       <div class="list">${v.quiz.map((q, i) => `<div class="row"><h3>${esc(q.q)}</h3>${q.options.map((o, oi) => {
         const picked = ans[i]; let cls = '';
         if (picked !== undefined) cls = oi === q.answer ? 'right' : oi === picked ? 'wrong' : '';
@@ -1774,6 +1847,15 @@ function renderRetain() {
       }).join('')}${ans[i] !== undefined && q.explain ? `<p class="small" style="margin-top:10px">${esc(q.explain)}</p>` : ''}</div>`).join('')}</div>` : ''}`;
   if (!state.session || state.session.scope !== v.id) startSession(v.id);
   renderReview('video-review');
+  renderCardManager();
+}
+function renderCardManager() {
+  const v = state.current; if (!v || !$('retain-count')) return;
+  const cards = allCards(v.id), active = activeCards(v.id).length, due = dueQueue(v.id).length;
+  $('retain-count').textContent = state.retainOff[v.id] ? 'Off: these cards stay here for practice only.' : `${active} of ${cards.length} cards in review, ${due} due now.`;
+  if (!$('cards-manage-list')) return;
+  $('cards-manage-sum').textContent = `Choose which cards to keep (${active} of ${cards.length})`;
+  $('cards-manage-list').innerHTML = cards.map((c) => `<label class="card-row"><input type="checkbox" data-action="card-toggle" data-key="${esc(c.key)}" ${c.rec?.suspended ? '' : 'checked'} /><span>${KIND_LABEL[c.card.kind] ? `<span class="kind-chip k-${c.card.kind}">${KIND_LABEL[c.card.kind]}</span> ` : ''}${esc(c.card.q)}</span></label>`).join('');
 }
 
 // Small, safe Markdown renderer: everything is escaped first, then a fixed set of patterns is turned into HTML.
@@ -1918,19 +2000,75 @@ function searchHit(v, q) {
   const n = (state.notes[v.id] || []).find((x) => has(x.text)); if (n) return { ok: true, why: `Note: ${n.text.slice(0, 50)}` };
   return { ok: false };
 }
+function libItemHtml(v, why) {
+  return `<div class="libitem ${state.view === 'video' && state.current?.id === v.id ? 'active' : ''}">
+      ${state.compareMode ? `<input type="checkbox" data-action="compare-pick" data-vid="${esc(v.id)}" ${state.compareSel.has(v.id) ? 'checked' : ''} aria-label="Select ${esc(v.title)} to compare" />` : ''}
+      <button class="lib-open" data-action="open-video" data-vid="${esc(v.id)}"><img class="thumb" src="https://i.ytimg.com/vi/${esc(v.id)}/mqdefault.jpg" alt="" loading="lazy" onerror="this.style.visibility='hidden'" /><span class="lib-text"><span class="t">${esc(v.title)}</span><span class="s">${esc(why || [v.isShort ? 'Short' : state.libGroup === 'type' ? '' : v.contentType, state.libGroup === 'collection' ? '' : v.topic, v.channel].filter(Boolean).join(', '))}</span></span></button>
+      ${state.compareMode ? '' : `<button class="lib-del" data-action="delete-video" data-vid="${esc(v.id)}" aria-label="Delete ${esc(v.title)}" title="Delete"><i data-lucide="trash-2"></i></button>`}
+    </div>`;
+}
+const TYPE_GROUP = { Tutorial: 'Tutorials', Talk: 'Talks', Podcast: 'Podcasts', Interview: 'Interviews', Explainer: 'Explainers', Review: 'Reviews', News: 'News', 'Short tip': 'Shorts', Other: 'Other' };
+function groupOf(v) {
+  if (state.libGroup === 'type') return v.isShort ? 'Shorts' : TYPE_GROUP[v.contentType] || 'Not classified';
+  return v.topic || 'Unsorted';
+}
+function collectionNames() {
+  const counts = {};
+  state.library.forEach((v) => { if (v.topic) counts[v.topic] = (counts[v.topic] || 0) + 1; });
+  return Object.keys(counts).sort((a, b) => counts[b] - counts[a]).slice(0, 40);
+}
 function renderLibrary() {
   const q = $('lib-search').value.trim().toLowerCase();
   const items = state.library.map((v) => ({ v, hit: searchHit(v, q) })).filter((x) => x.hit.ok);
-  $('lib-label').textContent = q ? `${items.length} of ${state.library.length} match` : `Library (${state.library.length})`;
-  $('lib-list').innerHTML = items.map(({ v, hit }) => `<div class="libitem ${state.view === 'video' && state.current?.id === v.id ? 'active' : ''}">
-      ${state.compareMode ? `<input type="checkbox" data-action="compare-pick" data-vid="${esc(v.id)}" ${state.compareSel.has(v.id) ? 'checked' : ''} aria-label="Select ${esc(v.title)} to compare" />` : ''}
-      <button class="lib-open" data-action="open-video" data-vid="${esc(v.id)}"><img class="thumb" src="https://i.ytimg.com/vi/${esc(v.id)}/mqdefault.jpg" alt="" loading="lazy" onerror="this.style.visibility='hidden'" /><span class="lib-text"><span class="t">${esc(v.title)}</span><span class="s">${esc(hit.why || [v.isShort ? 'Short' : '', v.topic, v.channel].filter(Boolean).join(', '))}</span></span></button>
-      ${state.compareMode ? '' : `<button class="lib-del" data-action="delete-video" data-vid="${esc(v.id)}" aria-label="Delete ${esc(v.title)}" title="Delete"><i data-lucide="trash-2"></i></button>`}
-    </div>`).join('') || `<p class="sec-note" style="padding:8px 10px">${q ? 'Nothing matches.' : 'No videos yet.'}</p>`;
+  $('lib-label').textContent = q ? `${items.length} of ${state.library.length} match` : 'Library';
+  $('lib-label').title = `${state.library.length} videos`;
+  $('lib-group').value = state.libGroup;
+  let html;
+  if (q || state.libGroup === 'recent') html = items.map(({ v, hit }) => libItemHtml(v, hit.why)).join('');
+  else {
+    const groups = new Map();
+    items.forEach(({ v }) => { const g = groupOf(v); if (!groups.has(g)) groups.set(g, []); groups.get(g).push(v); });
+    const names = [...groups.keys()].sort((a, b) => (a === 'Unsorted' || a === 'Not classified') - (b === 'Unsorted' || b === 'Not classified') || a.localeCompare(b));
+    html = names.map((g) => {
+      const key = `${state.libGroup}:${g}`, closed = !!state.collapsed[key], vids = groups.get(g);
+      const canRename = state.libGroup === 'collection' && g !== 'Unsorted';
+      return `<div class="libgroup ${closed ? 'closed' : ''}">
+        <div class="libgroup-head"><button class="libgroup-toggle" data-action="toggle-group" data-g="${esc(key)}" aria-expanded="${!closed}"><i data-lucide="chevron-down"></i><span class="g-name">${esc(g)}</span><span class="g-n">${vids.length}</span></button>${canRename ? `<button class="lib-del" data-action="rename-group" data-g="${esc(g)}" aria-label="Rename ${esc(g)}" title="Rename collection"><i data-lucide="pencil"></i></button>` : ''}</div>
+        ${closed ? '' : vids.map((v) => libItemHtml(v)).join('')}
+      </div>`;
+    }).join('');
+  }
+  $('lib-list').innerHTML = html || `<p class="sec-note" style="padding:8px 10px">${q ? 'Nothing matches.' : 'No videos yet.'}</p>`;
   $('compare-bar').hidden = !state.compareMode;
   $('btn-compare').textContent = state.compareMode ? 'Done' : 'Select';
   $('btn-run-compare').disabled = $('btn-run-combine').disabled = state.compareSel.size < 2;
   icons();
+}
+function renameCollection(from) {
+  const to = (prompt(`Rename the collection "${from}" to:`, from) || '').trim().slice(0, 60);
+  if (!to || to === from) return;
+  state.library.forEach((v) => { if (v.topic === from) { v.topic = to; v.topicByUser = true; } });
+  persist('library'); renderLibrary(); if (state.current) $('v-topic').value = state.current.topic || '';
+  toast(`Renamed to "${to}"`);
+}
+async function organizeLibrary() {
+  const targets = state.library.filter((v) => !v.topicByUser);
+  if (!targets.length) { toast('Every video already has a collection you chose.'); return; }
+  if (!state.apiKey) { toast('Add a Gemini key in settings to organize your library.'); return; }
+  const kept = [...new Set(state.library.filter((v) => v.topicByUser && v.topic).map((v) => v.topic))];
+  toast(`Organizing ${targets.length} videos…`, 60000);
+  try {
+    const brief = targets.map((v) => ({ id: v.id, title: v.title, channel: v.channel, type: v.contentType, idea: v.coreThesis.slice(0, 200) }));
+    const r = await gemini({ contents: [{ role: 'user', parts: [{ text: `Group these videos into a small set of collections for a personal learning library. Use 1-3 word names (e.g. "Data engineering", "Personal finance"). Aim for 3 to 10 collections overall, merge near-duplicates, and avoid one-video collections unless a topic truly stands alone.${kept.length ? ` Reuse these collections the user already made when they fit: ${kept.map((k) => `"${k}"`).join(', ')}.` : ''} Return only JSON: {"<video id>": "<collection>"}.\n\n${JSON.stringify(brief)}` }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0.2 } });
+    const map = parseJsonLoose(r.text), before = {};
+    let changed = 0;
+    targets.forEach((v) => { const t = str(map[v.id], 60); if (t && t !== v.topic) { before[v.id] = v.topic; v.topic = t; changed++; } });
+    persist('library'); state.libGroup = 'collection'; ls.set('td_lib_group', 'collection'); renderLibrary();
+    if (state.current) $('v-topic').value = state.current.topic || '';
+    toast(changed ? `Organized ${changed} videos into ${collectionNames().length} collections` : 'Your library was already organized', 7000, changed ? { label: 'Undo', run: () => {
+      state.library.forEach((v) => { if (v.id in before) v.topic = before[v.id]; }); persist('library'); renderLibrary(); toast('Restored');
+    } } : null);
+  } catch (e) { toast(`Couldn't organize: ${e.message}`, 5000); }
 }
 
 async function runCompare() {
@@ -2177,7 +2315,7 @@ function runPalette(i) { const c = palCmds[i]; $('dlg-palette').close(); if (c) 
 function toggleTheme() { state.dark = !state.dark; document.documentElement.classList.toggle('dark', state.dark); ls.set('td_dark', String(state.dark)); }
 function openSettings() {
   $('s-key').value = state.apiKey; fillModelSelect(); $('s-status').textContent = '';
-  $('s-voice').value = state.voice;
+  $('s-voice').value = state.voice; $('s-new-per-day').value = state.newPerDay;
   $('s-voice-name').innerHTML = VOICES.map((n) => `<option ${n === state.voiceName ? 'selected' : ''}>${n}</option>`).join('');
   $('dlg-settings').showModal();
 }
@@ -2292,6 +2430,10 @@ document.addEventListener('click', (e) => {
       if (!dictation && state.playerTime != null && !$('note-time').dataset.manual) $('note-time').value = fmtTs(state.playerTime);
       toggleDictation(el, $('note-text')); break;
     }
+    case 'suspend-card': suspendCurrent(el.dataset.box); break;
+    case 'toggle-group': state.collapsed[el.dataset.g] = !state.collapsed[el.dataset.g]; if (!state.collapsed[el.dataset.g]) delete state.collapsed[el.dataset.g]; ls.set('td_collapsed', JSON.stringify(state.collapsed)); renderLibrary(); break;
+    case 'rename-group': renameCollection(el.dataset.g); break;
+    case 'organize': organizeLibrary(); break;
     case 'hands-free': if (state.handsFree === el.dataset.box) stopHandsFree(); else { stopHandsFree(); startHandsFree(el.dataset.box); } break;
     case 'recap-make': makeRecap(); break;
     case 'recap-redo': makeRecap(true); break;
@@ -2309,6 +2451,14 @@ document.addEventListener('change', (e) => {
     if (el.checked) c[el.dataset.id] = true; else delete c[el.dataset.id];
     state.justChecked = el.checked ? el.dataset.id : null;
     persist('checks'); renderAct(); updateTabCounts(); state.justChecked = null;
+  } else if (el.dataset.action === 'retain-toggle') {
+    if (el.checked) delete state.retainOff[state.current.id]; else state.retainOff[state.current.id] = true;
+    persist('retainOff'); updateDueBadge(); updateTabCounts(); renderCardManager();
+  } else if (el.dataset.action === 'card-toggle') {
+    const k = el.dataset.key, rec = state.srs[k];
+    if (el.checked) { if (rec) { delete rec.suspended; if (!rec.last) delete state.srs[k]; } }
+    else state.srs[k] = { ...(rec || { reps: 0, interval: 0, ease: 2.5, lapses: 0 }), suspended: true };
+    persist('srs'); updateDueBadge(); updateTabCounts(); renderCardManager();
   } else if (el.dataset.action === 'compare-pick') {
     if (el.checked) state.compareSel.add(el.dataset.vid); else state.compareSel.delete(el.dataset.vid);
     renderLibrary();
@@ -2341,7 +2491,8 @@ $('pal-input').addEventListener('keydown', (e) => {
 document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => { setTab(b.dataset.tab); if (b.dataset.tab === 'retain') renderRetain(); }));
 $('lib-search').addEventListener('input', renderLibrary);
 $('t-search').addEventListener('input', (e) => renderTranscript(e.target.value));
-$('v-topic').addEventListener('change', (e) => { state.current.topic = e.target.value.trim(); persist('library'); renderLibrary(); });
+$('v-topic').addEventListener('change', (e) => { state.current.topic = e.target.value.trim(); state.current.topicByUser = !!state.current.topic; persist('library'); renderLibrary(); });
+$('lib-group').addEventListener('change', (e) => { state.libGroup = e.target.value; ls.set('td_lib_group', state.libGroup); renderLibrary(); });
 $('ask-form').addEventListener('submit', (e) => { e.preventDefault(); const q = $('ask-input').value; $('ask-input').value = ''; ask(q); });
 $('analyze-form').addEventListener('submit', (e) => { e.preventDefault(); submitAnalyze(); });
 $('a-file').addEventListener('change', (e) => {
@@ -2353,7 +2504,8 @@ $('settings-form').addEventListener('submit', (e) => {
   state.apiKey = $('s-key').value.trim(); state.model = $('s-model').value || state.model;
   ls.set('td_api_key', state.apiKey); ls.set('td_model', state.model);
   state.voice = $('s-voice').value; state.voiceName = $('s-voice-name').value || state.voiceName;
-  ls.set('td_voice', state.voice); ls.set('td_voice_name', state.voiceName); state.recap = null; if (state.current) renderRecapBar();
+  ls.set('td_voice', state.voice); ls.set('td_voice_name', state.voiceName);
+  state.newPerDay = Math.min(50, Math.max(1, Number($('s-new-per-day').value) || 10)); ls.set('td_new_per_day', String(state.newPerDay)); updateDueBadge(); state.recap = null; if (state.current) renderRecapBar();
   updateKeyIndicator(); $('dlg-settings').close(); toast('Settings saved');
   if (pendingAutoRun && state.apiKey) { pendingAutoRun = false; openAnalyze($('a-url').value, null, state.pendingKnown); submitAnalyze(); }
 });
@@ -2372,10 +2524,12 @@ $('note-form').addEventListener('submit', (e) => {
 });
 window.matchMedia('(max-width: 1180px)').addEventListener('change', placeSide);
 // One-off animations clear themselves, so they don't replay when a hidden tab is shown again.
-document.addEventListener('animationend', (e) => {
+const clearOneOff = (e) => {
   const el = e.target.closest('.enter, .draw, .just, .pop');
   if (el && !el.classList.contains('leaving')) el.classList.remove('enter', 'draw', 'just', 'pop');
-});
+};
+document.addEventListener('animationend', clearOneOff);
+document.addEventListener('animationcancel', clearOneOff); // interrupted by switching tabs: don't replay later
 
 /* ============================== Init ============================== */
 async function migrateLegacy() {
@@ -2398,6 +2552,9 @@ async function init() {
   state.askMode = ls.get('td_ask_mode', 'web') === 'video' ? 'video' : 'web';
   state.voice = ls.get('td_voice', null) || (state.apiKey ? 'gemini' : 'browser');
   state.voiceName = VOICES.includes(ls.get('td_voice_name')) ? ls.get('td_voice_name') : 'Kore';
+  state.newPerDay = Math.min(50, Math.max(1, Number(ls.get('td_new_per_day', 10)) || 10));
+  state.libGroup = ['collection', 'type', 'recent'].includes(ls.get('td_lib_group')) ? ls.get('td_lib_group') : 'collection';
+  try { state.collapsed = JSON.parse(ls.get('td_collapsed', '{}')) || {}; } catch { state.collapsed = {}; }
   if (!canListen()) document.documentElement.classList.add('no-mic');
   state.model = ls.get('td_model', 'gemini-3.8-flash');
   if (/^gemini-(1|2)\./.test(state.model) || state.model === 'gemini-4-carbon') { state.model = 'gemini-3.8-flash'; ls.set('td_model', state.model); }
@@ -2407,10 +2564,10 @@ async function init() {
   if (ls.get('td_side_off')) toggleSide(false);
 
   await DB.open();
-  const [library, notes, checks, stars, srs, chats, quiz, reviewLog, seeded, queue] = await Promise.all(
-    ['library', 'notes', 'checks', 'stars', 'srs', 'chats', 'quiz', 'reviewLog', 'seeded', 'queue'].map((k) => DB.get(k, k === 'library' || k === 'queue' ? [] : k === 'seeded' ? false : {}))
+  const [library, notes, checks, stars, srs, chats, quiz, reviewLog, seeded, queue, retainOff] = await Promise.all(
+    ['library', 'notes', 'checks', 'stars', 'srs', 'chats', 'quiz', 'reviewLog', 'seeded', 'queue', 'retainOff'].map((k) => DB.get(k, k === 'library' || k === 'queue' ? [] : k === 'seeded' ? false : {}))
   );
-  Object.assign(state, { notes, checks, stars, srs, chats, quiz, reviewLog });
+  Object.assign(state, { notes, checks, stars, srs, chats, quiz, reviewLog, retainOff: retainOff || {} });
   state.queue = arr(queue).map((q) => ({ ...q, status: q.status === 'working' ? 'pending' : q.status }));
   state.library = arr(library).map(normalizeVideo);
   if (!seeded) {
