@@ -1,0 +1,1681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>annotated — study guides for technical videos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&family=Schibsted+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<style>
+:root {
+  --paper: #F2F4F3; --surface: #FFFFFF; --sunk: #E8ECEC; --ink: #1B2430; --muted: #5E6B78; --faint: #8A96A1;
+  --rule: #D9DFE3; --link: #2546C9; --hl: #FFE45C; --hl-ink: #1B2430; --ok: #2E7D5B; --warn: #9A6A00; --bad: #C2362B;
+  --ui: 'Schibsted Grotesk', system-ui, sans-serif; --read: 'Literata', Georgia, serif; --code: 'JetBrains Mono', ui-monospace, monospace;
+  --r-sm: 6px; --r-md: 10px;
+}
+.dark {
+  --paper: #12161C; --surface: #1A2028; --sunk: #222933; --ink: #E6EBF0; --muted: #9AA6B2; --faint: #6E7A86;
+  --rule: #2A323C; --link: #9DB2FF; --hl: #E9CF3A; --hl-ink: #1B2430; --ok: #5FC596; --warn: #E5B94A; --bad: #F07A70;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--ui); -webkit-font-smoothing: antialiased; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; background: none; border: 0; padding: 0; }
+a { color: var(--link); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; border-radius: 4px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+svg.lucide { width: 16px; height: 16px; stroke-width: 1.75; flex-shrink: 0; }
+
+/* App frame */
+.app { display: grid; grid-template-columns: 248px minmax(0, 1fr) 380px; height: 100vh; }
+.rail { border-right: 1px solid var(--rule); display: flex; flex-direction: column; min-height: 0; background: var(--paper); }
+.main { overflow-y: auto; min-width: 0; }
+.side { border-left: 1px solid var(--rule); overflow-y: auto; background: var(--paper); }
+.mobilebar { display: none; }
+
+/* Rail */
+.brand { display: flex; align-items: center; gap: 10px; padding: 18px 18px 14px; font-weight: 700; font-size: 17px; letter-spacing: -0.01em; }
+.brand-mark { width: 22px; height: 22px; border-radius: 5px; background: var(--ink); position: relative; }
+.brand-mark::after { content: ''; position: absolute; left: 4px; right: 4px; top: 9px; height: 5px; background: var(--hl); border-radius: 1px; }
+.rail-block { padding: 0 12px 12px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 14px; border-radius: var(--r-sm); font-weight: 600; font-size: 14px; border: 1px solid var(--rule); background: var(--surface); }
+.btn:hover { border-color: var(--faint); }
+.btn-primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.btn-primary:hover { opacity: 0.9; }
+.btn-quiet { border-color: transparent; background: transparent; color: var(--muted); }
+.btn-quiet:hover { color: var(--ink); background: var(--sunk); }
+.btn-sm { padding: 5px 10px; font-size: 13px; }
+.btn[disabled] { opacity: 0.45; cursor: not-allowed; }
+.btn-danger { color: var(--bad); }
+.wide { width: 100%; }
+.navitem { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border-radius: var(--r-sm); font-size: 14px; font-weight: 500; color: var(--muted); text-align: left; }
+.navitem:hover { background: var(--sunk); color: var(--ink); }
+.navitem[aria-current="true"] { background: var(--surface); color: var(--ink); box-shadow: inset 0 0 0 1px var(--rule); }
+.count { margin-left: auto; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; padding: 1px 7px; border-radius: 10px; background: var(--hl); color: var(--hl-ink); }
+.count.zero { background: var(--sunk); color: var(--faint); }
+.search { width: 100%; padding: 7px 10px 7px 32px; border-radius: var(--r-sm); border: 1px solid var(--rule); background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%238A96A1' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") no-repeat 10px center; font-size: 14px; }
+.libhead { display: flex; align-items: center; justify-content: space-between; padding: 6px 22px 6px; font-size: 13px; color: var(--muted); }
+.liblist { flex: 1; overflow-y: auto; padding: 0 12px 12px; min-height: 0; }
+.libitem { display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; border-radius: var(--r-sm); }
+.libitem:hover { background: var(--sunk); }
+.libitem.active { background: var(--surface); box-shadow: inset 0 0 0 1px var(--rule); }
+.libitem button { text-align: left; min-width: 0; flex: 1; }
+.libitem .t { font-size: 14px; font-weight: 500; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.libitem .s { font-size: 12px; color: var(--faint); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.libitem input { margin-top: 3px; accent-color: var(--ink); }
+.railfoot { border-top: 1px solid var(--rule); padding: 10px 12px; display: flex; gap: 4px; align-items: center; }
+#key-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.side-details > summary { display: none; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warn); }
+.dot.on { background: var(--ok); }
+
+/* Reading column */
+.col { max-width: 760px; margin: 0 auto; padding: 36px 40px 80px; }
+.vh-title { font-size: 28px; line-height: 1.2; font-weight: 700; letter-spacing: -0.015em; margin: 0 0 10px; }
+.vh-meta { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; color: var(--muted); font-size: 14px; }
+.tag-input { border: 1px dashed var(--rule); background: transparent; border-radius: var(--r-sm); padding: 2px 8px; width: 150px; font-size: 13px; color: var(--muted); }
+.tag-input:focus { border-style: solid; color: var(--ink); }
+.vh-actions { display: flex; gap: 6px; margin-top: 14px; flex-wrap: wrap; }
+details.menu { position: relative; }
+details.menu > summary { list-style: none; }
+details.menu > summary::-webkit-details-marker { display: none; }
+.menu-pop { position: absolute; z-index: 30; top: calc(100% + 6px); left: 0; min-width: 220px; background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-md); padding: 6px; box-shadow: 0 12px 32px -12px rgba(15, 25, 40, 0.35); }
+.menu-pop button { display: flex; gap: 10px; align-items: center; width: 100%; padding: 8px 10px; border-radius: var(--r-sm); font-size: 14px; text-align: left; }
+.menu-pop button:hover { background: var(--sunk); }
+
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--rule); margin: 28px 0 28px; position: sticky; top: 0; background: var(--paper); z-index: 10; overflow-x: auto; }
+.tab { padding: 10px 14px; font-size: 15px; font-weight: 500; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--ink); font-weight: 600; border-bottom-color: var(--ink); }
+.panel[hidden] { display: none; }
+
+h2.sec { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; margin: 40px 0 6px; }
+h2.sec:first-child { margin-top: 0; }
+.sec-note { color: var(--muted); font-size: 14px; margin: 0 0 14px; }
+.thesis { font-family: var(--read); font-size: 25px; line-height: 1.6; font-weight: 500; margin: 0 0 18px; }
+.hl { background: linear-gradient(177deg, transparent 3%, var(--hl) 3%, var(--hl) 97%, transparent 97%); color: var(--hl-ink); -webkit-box-decoration-break: clone; box-decoration-break: clone; padding: 0.06em 0.25em; }
+.dark .thesis .hl { color: var(--hl-ink); }
+.prose { font-family: var(--read); font-size: 17px; line-height: 1.7; max-width: 68ch; }
+.prose p { margin: 0 0 1em; }
+
+.ts { font-family: var(--ui); font-style: normal; display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; padding: 1px 6px; border-radius: 3px; background: color-mix(in srgb, var(--hl) 55%, transparent); color: var(--ink); vertical-align: 1px; }
+.dark .ts { background: color-mix(in srgb, var(--hl) 28%, transparent); }
+.ts:hover { background: var(--hl); color: var(--hl-ink); }
+.ts svg.lucide { width: 11px; height: 11px; }
+
+.origin { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); padding: 1px 7px; border-radius: 10px; border: 1px solid var(--rule); white-space: nowrap; }
+.origin.video { background: var(--sunk); border-color: transparent; color: var(--ink); }
+.origin.web { border-style: solid; color: var(--link); border-color: color-mix(in srgb, var(--link) 40%, transparent); }
+.origin.unv { border-style: dashed; color: var(--warn); border-color: color-mix(in srgb, var(--warn) 50%, transparent); }
+
+.list { display: flex; flex-direction: column; }
+.row { padding: 16px 0; border-top: 1px solid var(--rule); }
+.row:last-child { border-bottom: 1px solid var(--rule); }
+.row-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; flex-wrap: wrap; }
+.row h3 { font-size: 16px; font-weight: 600; margin: 0; line-height: 1.35; }
+.row .body { font-family: var(--read); font-size: 16px; line-height: 1.65; color: var(--ink); margin: 4px 0 0; }
+.row .small { font-size: 14px; color: var(--muted); margin: 4px 0 0; }
+.cat { font-size: 13px; color: var(--muted); }
+.star { margin-left: auto; color: var(--faint); padding: 2px; }
+.star.on { color: var(--warn); }
+.star.on svg { fill: currentColor; }
+
+.shift { display: grid; grid-template-columns: 1fr 24px 1fr; gap: 12px; align-items: start; padding: 16px 0; border-top: 1px solid var(--rule); }
+.shift:last-child { border-bottom: 1px solid var(--rule); }
+.shift .before { color: var(--muted); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--muted) 50%, transparent); font-family: var(--read); }
+.shift .after { font-family: var(--read); font-weight: 500; }
+.shift .arrow { color: var(--faint); padding-top: 4px; }
+
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.chip { padding: 4px 10px; border-radius: 14px; font-size: 13px; font-weight: 500; color: var(--muted); border: 1px solid var(--rule); }
+.chip:hover { color: var(--ink); border-color: var(--faint); }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+blockquote.q { margin: 0; padding: 14px 0 14px 18px; border-left: 3px solid var(--hl); font-family: var(--read); font-style: italic; font-size: 18px; line-height: 1.55; }
+.q-foot { display: flex; gap: 10px; align-items: center; margin-top: 6px; font-style: normal; }
+
+.check { display: flex; gap: 12px; align-items: flex-start; padding: 14px 0; border-top: 1px solid var(--rule); }
+.check:last-child { border-bottom: 1px solid var(--rule); }
+.check input { margin-top: 5px; width: 17px; height: 17px; accent-color: var(--ok); flex-shrink: 0; }
+.check .when { color: var(--muted); font-size: 14px; }
+.check .do { font-size: 16px; font-weight: 500; }
+.check.done .do { text-decoration: line-through; color: var(--faint); }
+.prio { font-size: 12px; font-weight: 600; color: var(--bad); }
+.progress { height: 4px; background: var(--sunk); border-radius: 2px; overflow: hidden; margin: 6px 0 14px; }
+.progress > div { height: 100%; background: var(--ok); transition: width 0.3s; }
+
+.codebox { border: 1px solid var(--rule); border-radius: var(--r-md); background: var(--surface); margin: 10px 0 16px; overflow: hidden; }
+.codebox-head { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--rule); font-size: 13px; color: var(--muted); }
+.codebox-head .btn { margin-left: auto; }
+.codebox pre { margin: 0; padding: 14px; overflow-x: auto; font: 13.5px/1.6 var(--code); color: var(--ink); }
+
+.linkrow { display: flex; gap: 12px; align-items: flex-start; padding: 14px 0; border-top: 1px solid var(--rule); }
+.linkrow:last-child { border-bottom: 1px solid var(--rule); }
+.linkrow .lt { font-weight: 600; font-size: 15px; }
+.linkrow .lu { font-size: 13px; color: var(--faint); word-break: break-all; }
+.ltype { font-size: 12px; font-weight: 600; color: var(--muted); min-width: 64px; padding-top: 2px; }
+.sources { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; font-size: 13px; align-items: center; }
+.sources a { padding: 1px 8px; border: 1px solid var(--rule); border-radius: 10px; text-decoration: none; }
+.sources a:hover { border-color: var(--link); }
+.cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+.plain { margin: 0; padding-left: 18px; }
+.plain li { margin: 6px 0; }
+details.how { margin-top: 18px; font-size: 13px; color: var(--muted); }
+details.how summary { cursor: pointer; }
+
+/* Review */
+.review { border: 1px solid var(--rule); background: var(--surface); border-radius: var(--r-md); padding: 28px; min-height: 260px; display: flex; flex-direction: column; }
+.review .meta { font-size: 13px; color: var(--muted); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.review .qtext { font-family: var(--read); font-size: 22px; line-height: 1.45; margin: 18px 0; }
+.review .atext { font-family: var(--read); font-size: 17px; line-height: 1.65; border-top: 1px dashed var(--rule); padding-top: 16px; margin-bottom: 18px; }
+.review .grades { margin-top: auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.grade { padding: 10px 6px; border-radius: var(--r-sm); border: 1px solid var(--rule); font-weight: 600; font-size: 14px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.grade small { font-weight: 400; color: var(--muted); font-size: 12px; }
+.grade:hover { border-color: var(--ink); }
+.empty { padding: 28px; border: 1px dashed var(--rule); border-radius: var(--r-md); color: var(--muted); text-align: center; }
+.empty strong { color: var(--ink); display: block; margin-bottom: 4px; font-size: 16px; }
+.stats { display: flex; gap: 28px; margin: 4px 0 24px; flex-wrap: wrap; }
+.stat b { display: block; font-size: 30px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 13px; color: var(--muted); }
+
+.quiz-opt { display: block; width: 100%; text-align: left; padding: 10px 12px; border: 1px solid var(--rule); border-radius: var(--r-sm); margin-top: 6px; font-size: 15px; background: var(--surface); }
+.quiz-opt:hover:not([disabled]) { border-color: var(--faint); }
+.quiz-opt.right { border-color: var(--ok); color: var(--ok); font-weight: 600; }
+.quiz-opt.wrong { border-color: var(--bad); color: var(--bad); }
+.quiz-opt[disabled] { cursor: default; }
+
+/* Chat */
+.chat { display: flex; flex-direction: column; gap: 14px; margin-bottom: 16px; }
+.msg { max-width: 88%; padding: 12px 14px; border-radius: var(--r-md); font-size: 15px; line-height: 1.6; white-space: pre-wrap; }
+.msg.user { align-self: flex-end; background: var(--ink); color: var(--paper); }
+.msg.bot { align-self: flex-start; background: var(--surface); border: 1px solid var(--rule); }
+.composer { display: flex; gap: 8px; position: sticky; bottom: 0; background: var(--paper); padding: 10px 0; }
+.input, textarea.input, select.input { width: 100%; padding: 9px 12px; border-radius: var(--r-sm); border: 1px solid var(--rule); background: var(--surface); font-size: 15px; }
+textarea.input { resize: vertical; min-height: 80px; line-height: 1.5; }
+.input:focus { border-color: var(--link); outline: none; }
+
+.tline { display: flex; gap: 12px; padding: 5px 0; font-size: 15px; line-height: 1.55; }
+.tline .ts { flex-shrink: 0; align-self: flex-start; margin-top: 2px; }
+mark { background: var(--hl); color: var(--hl-ink); padding: 0 1px; }
+
+/* Companion */
+.player { aspect-ratio: 16/9; background: #000; }
+.player iframe { width: 100%; height: 100%; border: 0; display: block; }
+.side-body { padding: 18px; }
+.side h2 { font-size: 15px; font-weight: 700; margin: 0 0 4px; }
+.note-form { display: grid; grid-template-columns: 72px 1fr; gap: 8px; margin: 10px 0 14px; }
+.note-form textarea { grid-column: 1 / -1; min-height: 64px; }
+.note-form .btn { grid-column: 1 / -1; }
+.note { padding: 10px 0; border-top: 1px solid var(--rule); font-size: 14px; display: flex; gap: 10px; align-items: flex-start; }
+.note p { margin: 0; flex: 1; white-space: pre-wrap; }
+.note .x { color: var(--faint); }
+.note .x:hover { color: var(--bad); }
+.chapter { display: flex; gap: 10px; padding: 8px 0; border-top: 1px solid var(--rule); font-size: 14px; text-align: left; width: 100%; }
+.chapter .ts { align-self: flex-start; margin-top: 1px; }
+.chapter:hover .ct { text-decoration: underline; }
+
+/* Dialogs */
+dialog { border: 1px solid var(--rule); border-radius: var(--r-md); background: var(--surface); color: var(--ink); padding: 0; width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 48px); }
+dialog::backdrop { background: rgba(15, 20, 28, 0.5); }
+.dlg-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px 0; }
+.dlg-head h2 { margin: 0; font-size: 19px; }
+.dlg-body { padding: 16px 22px 22px; display: flex; flex-direction: column; gap: 14px; }
+label.f { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; }
+label.f small { font-weight: 400; color: var(--muted); }
+.dlg-foot { display: flex; justify-content: flex-end; gap: 8px; align-items: center; }
+.status { font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 8px; min-height: 20px; }
+.spin { width: 14px; height: 14px; border: 2px solid var(--rule); border-top-color: var(--ink); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.err { color: var(--bad); }
+.palette-list { max-height: 50vh; overflow-y: auto; padding: 0 8px 8px; }
+.palette-list button { display: flex; justify-content: space-between; gap: 10px; width: 100%; text-align: left; padding: 9px 12px; border-radius: var(--r-sm); font-size: 14px; }
+.palette-list button:hover, .palette-list button.sel { background: var(--sunk); }
+.palette-list small { color: var(--faint); }
+
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 10px 16px; border-radius: var(--r-sm); font-size: 14px; z-index: 100; max-width: calc(100vw - 32px); }
+.toast[hidden] { display: none; }
+
+#print-head { display: none; }
+
+@media (max-width: 1180px) {
+  .app { grid-template-columns: 248px minmax(0, 1fr); }
+  .side { display: none; }
+  .side.inline { display: block; border: 0; border-bottom: 1px solid var(--rule); }
+  .side.inline .side-details > summary { display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; font-size: 14px; padding: 12px 18px; list-style: none; }
+  .side.inline .side-details > summary::-webkit-details-marker { display: none; }
+  .side.inline .side-body { padding-top: 0; }
+  .side.inline .player { max-height: 42vh; margin: 0 auto; }
+}
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; height: auto; min-height: 100vh; }
+  .rail { position: fixed; inset: 0 auto 0 0; width: 280px; z-index: 50; transform: translateX(-100%); transition: transform 0.2s; }
+  .rail.open { transform: none; box-shadow: 0 0 40px rgba(0,0,0,.25); }
+  .main { overflow: visible; }
+  .mobilebar { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--rule); position: sticky; top: 0; background: var(--paper); z-index: 20; }
+  .col { padding: 24px 18px 60px; }
+  .vh-title { font-size: 23px; }
+  .thesis { font-size: 21px; }
+  .cols2 { grid-template-columns: 1fr; }
+  .shift { grid-template-columns: 1fr; gap: 4px; }
+  .shift .arrow { transform: rotate(90deg); width: 16px; }
+  .tabs { top: 53px; }
+  .review { padding: 20px; }
+  .review .grades { grid-template-columns: repeat(2, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+@media print {
+  .rail, .side, .mobilebar, .tabs, .vh-actions, .no-print, dialog, .toast, #panel-retain, #panel-ask, #panel-transcript, #today-view { display: none !important; }
+  .app { display: block; height: auto; }
+  .main { overflow: visible; }
+  .panel[hidden] { display: block !important; }
+  body { background: #fff; color: #000; }
+  .col { max-width: none; padding: 0; }
+  .row, .check, .shift, .linkrow { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail" id="rail" aria-label="Library">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span>annotated</div>
+    <div class="rail-block">
+      <button class="btn btn-primary wide" data-action="open-analyze"><i data-lucide="plus"></i>Analyze a video</button>
+    </div>
+    <div class="rail-block">
+      <button class="navitem" id="nav-today" data-action="show-today"><i data-lucide="calendar-check"></i>Today's review<span class="count zero" id="due-count">0</span></button>
+    </div>
+    <div class="rail-block">
+      <label class="sr" for="lib-search">Search your library</label>
+      <input id="lib-search" class="search" type="search" placeholder="Search videos, links, transcripts" autocomplete="off" />
+    </div>
+    <div class="libhead">
+      <span id="lib-label">Library</span>
+      <button class="btn btn-quiet btn-sm" id="btn-compare" data-action="toggle-compare">Compare</button>
+    </div>
+    <div class="liblist" id="lib-list"></div>
+    <div class="rail-block" id="compare-bar" hidden>
+      <button class="btn wide" id="btn-run-compare" data-action="run-compare" disabled>Compare selected</button>
+    </div>
+    <div class="railfoot">
+      <button class="btn btn-quiet btn-sm" data-action="open-settings" style="flex:1;justify-content:flex-start"><span class="dot" id="key-dot"></span><span id="key-label">Add Gemini key</span></button>
+      <button class="btn btn-quiet btn-sm" data-action="open-palette" title="Commands (Ctrl+K)" aria-label="Open commands"><i data-lucide="command"></i></button>
+      <button class="btn btn-quiet btn-sm" data-action="toggle-theme" aria-label="Toggle dark mode"><i data-lucide="moon"></i></button>
+    </div>
+  </aside>
+
+  <main class="main" id="main">
+    <div class="mobilebar">
+      <button class="btn btn-quiet btn-sm" data-action="open-rail" aria-label="Open library"><i data-lucide="menu"></i></button>
+      <span style="font-weight:700">annotated</span>
+      <button class="btn btn-sm" data-action="open-analyze"><i data-lucide="plus"></i>Analyze</button>
+    </div>
+
+    <div class="side inline" id="side-inline" hidden></div>
+
+    <!-- Today view -->
+    <div class="col" id="today-view" hidden>
+      <h1 class="vh-title">Today's review</h1>
+      <p class="sec-note">Cards from every video in your library, scheduled so you see each one just before you'd forget it.</p>
+      <div class="stats" id="today-stats"></div>
+      <div id="today-review"></div>
+    </div>
+
+    <!-- Video view -->
+    <div class="col" id="video-view" hidden>
+      <div id="print-head"></div>
+      <h1 class="vh-title" id="v-title"></h1>
+      <div class="vh-meta">
+        <span id="v-channel"></span>
+        <label><span class="sr">Collection</span><input class="tag-input" id="v-topic" placeholder="Add a collection" /></label>
+        <span id="v-source"></span>
+      </div>
+      <div class="vh-actions">
+        <a class="btn btn-sm" id="v-open" target="_blank" rel="noopener noreferrer"><i data-lucide="external-link"></i>Open on YouTube</a>
+        <details class="menu" id="export-menu">
+          <summary class="btn btn-sm"><i data-lucide="download"></i>Export</summary>
+          <div class="menu-pop">
+            <button data-action="export" data-kind="copy-md"><i data-lucide="copy"></i>Copy as Markdown</button>
+            <button data-action="export" data-kind="md"><i data-lucide="file-text"></i>Markdown file</button>
+            <button data-action="export" data-kind="obsidian"><i data-lucide="gem"></i>Obsidian note</button>
+            <button data-action="export" data-kind="anki"><i data-lucide="layers"></i>Anki cards (CSV)</button>
+            <button data-action="export" data-kind="json"><i data-lucide="braces"></i>JSON</button>
+            <button data-action="export" data-kind="print"><i data-lucide="printer"></i>Print study sheet</button>
+          </div>
+        </details>
+        <button class="btn btn-sm" data-action="reanalyze" id="btn-reanalyze"><i data-lucide="refresh-cw"></i>Re-analyze</button>
+        <button class="btn btn-sm btn-quiet btn-danger" data-action="delete-video" id="btn-delete"><i data-lucide="trash-2"></i><span>Delete</span></button>
+      </div>
+
+      <nav class="tabs" role="tablist" aria-label="Study sections">
+        <button class="tab" role="tab" data-tab="understand">Understand</button>
+        <button class="tab" role="tab" data-tab="act">Act</button>
+        <button class="tab" role="tab" data-tab="retain">Retain</button>
+        <button class="tab" role="tab" data-tab="ask">Ask</button>
+        <button class="tab" role="tab" data-tab="transcript">Transcript</button>
+      </nav>
+
+      <section class="panel" id="panel-understand" role="tabpanel"></section>
+      <section class="panel" id="panel-act" role="tabpanel"></section>
+      <section class="panel" id="panel-retain" role="tabpanel"></section>
+      <section class="panel" id="panel-ask" role="tabpanel">
+        <h2 class="sec">Ask about this video</h2>
+        <p class="sec-note">Answers use the transcript and the analysis. Timestamps in answers are clickable.</p>
+        <div class="chat" id="chat"></div>
+        <div class="chips" id="ask-suggest"></div>
+        <form class="composer" id="ask-form">
+          <label class="sr" for="ask-input">Your question</label>
+          <input class="input" id="ask-input" placeholder="What did they say about…" autocomplete="off" />
+          <button class="btn btn-primary" type="submit">Ask</button>
+        </form>
+      </section>
+      <section class="panel" id="panel-transcript" role="tabpanel">
+        <h2 class="sec">Transcript</h2>
+        <input class="input" id="t-search" type="search" placeholder="Find in transcript" style="margin:8px 0 14px" />
+        <div id="t-body"></div>
+      </section>
+    </div>
+
+    <!-- Empty state -->
+    <div class="col" id="empty-view" hidden>
+      <h1 class="vh-title">Turn a tutorial into something you keep</h1>
+      <p class="prose">Paste a YouTube link. You'll get the core idea, what to do differently, every link and command from the video, and flashcards that come back for review.</p>
+      <button class="btn btn-primary" data-action="open-analyze"><i data-lucide="plus"></i>Analyze a video</button>
+    </div>
+  </main>
+
+  <aside class="side" id="side" aria-label="Player and notes">
+    <div id="side-content">
+      <div class="player" id="player-wrap"></div>
+      <details class="side-details" id="side-details" open>
+      <summary><i data-lucide="notebook-pen"></i>Notes and chapters <span id="notes-count" style="color:var(--muted);font-weight:400"></span></summary>
+      <div class="side-body">
+        <h2>Notes</h2>
+        <p class="sec-note" style="font-size:13px;margin:0">Pause the video and write. Each note keeps the moment it belongs to.</p>
+        <form class="note-form" id="note-form">
+          <label class="sr" for="note-time">Time</label>
+          <input class="input" id="note-time" placeholder="00:00" inputmode="numeric" />
+          <span class="status" id="note-time-hint" style="font-size:13px">Filled from the player</span>
+          <label class="sr" for="note-text">Note</label>
+          <textarea class="input" id="note-text" placeholder="What clicked, what to try, what to check"></textarea>
+          <button class="btn btn-sm" type="submit">Add note</button>
+        </form>
+        <div id="notes-list"></div>
+        <h2 style="margin-top:24px">Chapters</h2>
+        <div id="chapters-list"></div>
+      </div>
+      </details>
+    </div>
+  </aside>
+</div>
+
+<!-- Analyze dialog -->
+<dialog id="dlg-analyze">
+  <form method="dialog" id="analyze-form">
+    <div class="dlg-head"><h2>Analyze a video</h2><button type="button" class="btn btn-quiet btn-sm" data-action="close-dialog" aria-label="Close"><i data-lucide="x"></i></button></div>
+    <div class="dlg-body">
+      <label class="f">YouTube link
+        <input class="input" id="a-url" required placeholder="https://www.youtube.com/watch?v=…" autocomplete="off" />
+      </label>
+      <label class="f">Read it as
+        <select class="input" id="a-lens">
+          <option value="engineer">An engineer who'll build with this</option>
+          <option value="student">A student learning the topic</option>
+          <option value="lead">A tech lead or PM deciding what to adopt</option>
+        </select>
+      </label>
+      <label class="f">Video description <small>Optional. Paste it to catch every link the creator listed.</small>
+        <textarea class="input" id="a-desc" rows="3"></textarea>
+      </label>
+      <label class="f">Transcript <small>Optional. With a transcript, quotes are checked word for word and timestamps are exact. Paste text or load .txt, .srt or .vtt.</small>
+        <textarea class="input" id="a-transcript" rows="3"></textarea>
+        <input type="file" id="a-file" accept=".txt,.srt,.vtt" style="font-size:13px;font-weight:400" />
+      </label>
+      <div class="status" id="a-status" role="status" aria-live="polite"></div>
+      <div class="dlg-foot">
+        <button type="button" class="btn" data-action="close-dialog">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="a-submit">Analyze</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<!-- Settings dialog -->
+<dialog id="dlg-settings">
+  <form method="dialog" id="settings-form">
+    <div class="dlg-head"><h2>Gemini settings</h2><button type="button" class="btn btn-quiet btn-sm" data-action="close-dialog" aria-label="Close"><i data-lucide="x"></i></button></div>
+    <div class="dlg-body">
+      <label class="f">API key <small>Stored only in this browser. Get one at aistudio.google.com.</small>
+        <input class="input" id="s-key" type="password" autocomplete="off" />
+      </label>
+      <label class="f">Model
+        <select class="input" id="s-model"></select>
+      </label>
+      <button type="button" class="btn btn-sm" data-action="load-models" style="align-self:flex-start"><i data-lucide="refresh-cw"></i>Load models available to this key</button>
+      <div class="status" id="s-status" role="status"></div>
+      <div class="dlg-foot">
+        <button type="button" class="btn btn-quiet btn-danger" data-action="clear-key">Remove key</button>
+        <span style="flex:1"></span>
+        <button type="button" class="btn" data-action="close-dialog">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<!-- Compare dialog -->
+<dialog id="dlg-compare" style="width:min(760px,calc(100vw - 32px))">
+  <div class="dlg-head"><h2>How these videos compare</h2><button type="button" class="btn btn-quiet btn-sm" data-action="close-dialog" aria-label="Close"><i data-lucide="x"></i></button></div>
+  <div class="dlg-body" id="compare-body"></div>
+</dialog>
+
+<!-- Command palette -->
+<dialog id="dlg-palette">
+  <div class="dlg-body" style="padding-bottom:8px">
+    <label class="sr" for="pal-input">Type a command or video</label>
+    <input class="input" id="pal-input" placeholder="Jump to a video or run a command" autocomplete="off" />
+  </div>
+  <div class="palette-list" id="pal-list"></div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<script>
+'use strict';
+/* ============================== Utilities ============================== */
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const str = (x, max = 4000) => (typeof x === 'string' ? x : x == null ? '' : String(x)).trim().slice(0, max);
+const arr = (x) => (Array.isArray(x) ? x : []);
+const uid = () => Math.random().toString(36).slice(2, 10);
+const todayKey = () => new Date().toISOString().slice(0, 10);
+const DAY = 86400000;
+
+function hash(s) { let h = 5381; for (const c of String(s)) h = ((h << 5) + h + c.charCodeAt(0)) | 0; return (h >>> 0).toString(36); }
+
+function safeUrl(u) {
+  try { const x = new URL(String(u).trim()); return (x.protocol === 'http:' || x.protocol === 'https:') ? x.href : null; } catch { return null; }
+}
+function urlKey(u) {
+  try {
+    const x = new URL(u); x.hash = '';
+    [...x.searchParams.keys()].forEach((k) => { if (/^utm_|^si$|^feature$/i.test(k)) x.searchParams.delete(k); });
+    return (x.host.replace(/^www\./, '') + x.pathname.replace(/\/$/, '') + x.search).toLowerCase();
+  } catch { return String(u).toLowerCase(); }
+}
+function hostOf(u) { try { return new URL(u).host.replace(/^www\./, ''); } catch { return ''; } }
+
+function parseTs(ts) {
+  if (typeof ts === 'number' && isFinite(ts)) return Math.max(0, Math.floor(ts));
+  const parts = String(ts || '').replace(/[\[\]\s]/g, '').split(':').map(Number);
+  if (!parts.length || parts.some((n) => isNaN(n))) return 0;
+  return parts.reduce((acc, n) => acc * 60 + n, 0);
+}
+function fmtTs(sec) {
+  const s = Math.max(0, Math.floor(sec || 0)), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = s % 60;
+  const p = (n) => String(n).padStart(2, '0');
+  return h ? `${h}:${p(m)}:${p(r)}` : `${p(m)}:${p(r)}`;
+}
+function tsOf(item) {
+  if (!item) return { timestamp: '', seconds: null };
+  const hasSec = typeof item.seconds === 'number' && isFinite(item.seconds);
+  const hasTs = item.timestamp && /\d/.test(String(item.timestamp));
+  if (!hasSec && !hasTs) return { timestamp: '', seconds: null };
+  const sec = hasSec ? Math.floor(item.seconds) : parseTs(item.timestamp);
+  return { timestamp: fmtTs(sec), seconds: sec };
+}
+function extractYoutubeId(input) {
+  const t = String(input || '').trim();
+  if (/^[\w-]{11}$/.test(t)) return t;
+  const m = t.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/) || t.match(/[?&]v=([\w-]{11})/);
+  return m ? m[1] : null;
+}
+
+let toastTimer;
+function toast(msg, ms = 2800) {
+  const t = $('toast'); t.textContent = msg; t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.hidden = true), ms);
+}
+function icons() { try { lucide.createIcons(); } catch {} }
+function download(name, content, mime) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([content], { type: mime })); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+async function copyText(text, msg = 'Copied') {
+  try { await navigator.clipboard.writeText(text); toast(msg); }
+  catch {
+    const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); toast(msg); } catch { toast('Copy failed. Select the text and copy it manually.'); }
+    ta.remove();
+  }
+}
+
+/* ============================== Storage (IndexedDB) ============================== */
+const ls = {
+  get(k, fb = null) { try { const v = localStorage.getItem(k); return v === null ? fb : v; } catch { return fb; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+  del(k) { try { localStorage.removeItem(k); } catch {} },
+};
+const DB = {
+  db: null, mem: new Map(),
+  async open() {
+    try {
+      this.db = await new Promise((res, rej) => {
+        const r = indexedDB.open('annotated', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('kv');
+        r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+      });
+    } catch { this.db = null; toast('This browser blocks local storage, so your library will reset when you close the tab.', 6000); }
+  },
+  get(k, fb) {
+    if (!this.db) return Promise.resolve(this.mem.has(k) ? this.mem.get(k) : fb);
+    return new Promise((res) => {
+      try { const q = this.db.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result === undefined ? fb : q.result); q.onerror = () => res(fb); }
+      catch { res(fb); }
+    });
+  },
+  set(k, v) {
+    if (!this.db) { this.mem.set(k, v); return Promise.resolve(true); }
+    return new Promise((res) => {
+      try {
+        const tx = this.db.transaction('kv', 'readwrite'); tx.objectStore('kv').put(v, k);
+        tx.oncomplete = () => res(true); tx.onerror = tx.onabort = () => res(false);
+      } catch { res(false); }
+    });
+  },
+};
+const saveTimers = {};
+function persist(key, delay = 0) {
+  clearTimeout(saveTimers[key]);
+  saveTimers[key] = setTimeout(async () => {
+    const value = key === 'library' ? state.library : state[key];
+    const ok = await DB.set(key, value);
+    if (!ok) toast("Couldn't save. Browser storage may be full: export or delete a few videos.", 6000);
+  }, delay);
+}
+
+/* ============================== State ============================== */
+const state = {
+  library: [], current: null, view: 'video', tab: 'understand',
+  notes: {}, checks: {}, stars: {}, srs: {}, chats: {}, quiz: {}, reviewLog: {},
+  apiKey: '', model: 'gemini-3.8-flash', models: null, dark: false,
+  compareMode: false, compareSel: new Set(), insightFilter: 'all', linkFilter: 'all',
+  playerTime: null, session: null, busy: false,
+};
+const DEFAULT_MODELS = ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-pro-preview', 'gemini-4-argon'];
+const LENSES = { engineer: 'an engineer who will build with this', student: 'a student learning the topic', lead: 'a tech lead or PM deciding what to adopt' };
+
+/* ============================== Normalisation ============================== */
+// Accepts the new schema and the original prototype schema, and returns a fully-shaped, safe video object.
+function normalizeVideo(raw) {
+  const v = raw || {};
+  const id = extractYoutubeId(v.id) || extractYoutubeId(v.url) || str(v.id, 20);
+  const withTs = (x) => ({ ...tsOf(x) });
+  const srcList = (list) => arr(list).map((s) => ({ title: str(s?.title, 120) || hostOf(s?.url), url: safeUrl(s?.url) })).filter((s) => s.url);
+
+  let playbook = arr(v.playbook).map((p) => ({ id: str(p.id, 40) || uid(), when: str(p.when, 400), do: str(p.do, 600), priority: p.priority === 'High' ? 'High' : 'Normal', ...withTs(p) })).filter((p) => p.do);
+  if (!playbook.length) {
+    playbook = [
+      ...arr(v.whenDoRules).map((r) => ({ id: 'r-' + hash(r.when + r.do), when: str(r.when, 400), do: str(r.do, 600), priority: 'High', timestamp: '', seconds: null })),
+      ...arr(v.learnings).map((l) => ({ id: str(l.id, 40) || 'l-' + hash(l.text), when: '', do: str(l.text, 600), priority: l.priority === 'High' ? 'High' : 'Normal', timestamp: '', seconds: null })),
+    ].filter((p) => p.do);
+  }
+
+  let links = arr(v.links).map((l) => ({ title: str(l.title, 160), url: safeUrl(l.url), type: str(l.type, 20) || 'Resource', context: str(l.context, 300), origin: ['description', 'spoken', 'video', 'web'].includes(l.origin) ? l.origin : 'video' })).filter((l) => l.url);
+  if (!links.length) links = arr(v.videoLinks).map((l) => ({ title: str(l.title, 160), url: safeUrl(l.url), type: str(l.type, 20) || 'Resource', context: str(l.context, 300), origin: /description/i.test(l.context) ? 'description' : 'video' })).filter((l) => l.url);
+
+  const transcript = arr(v.transcript).map((t) => ({ ...withTs(t), text: str(t.text, 2000) })).filter((t) => t.text);
+
+  return {
+    id, url: `https://www.youtube.com/watch?v=${id}`,
+    title: str(v.title, 300) || `YouTube video ${id}`, channel: str(v.channel, 120) || 'Unknown channel',
+    topic: str(v.topic, 60), lens: LENSES[v.lens] ? v.lens : 'engineer',
+    sourceLabel: str(v.sourceLabel, 120), analyzedAt: v.analyzedAt || null, sample: !!v.sample,
+    model: str(v.model, 60), notesOnSource: arr(v.notesOnSource).map((n) => str(n, 300)).filter(Boolean),
+    coreThesis: str(v.coreThesis, 800), summary: str(v.summary, 3000),
+    shifts: arr(v.shifts).map((s) => ({ before: str(s.before, 400), after: str(s.after, 400), ...withTs(s) })).filter((s) => s.before && s.after),
+    insights: arr(v.insights).map((i, n) => ({ id: str(i.id, 40) || `i${n}`, category: str(i.category, 40) || 'Insight', title: str(i.title, 200), body: str(i.body, 1200), ...withTs(i) })).filter((i) => i.title || i.body),
+    playbook,
+    frameworks: arr(v.frameworks).map((f) => ({ name: str(f.name, 120), desc: str(f.desc, 600) })).filter((f) => f.name),
+    code: arr(v.code).map((c) => ({ id: str(c.id, 40) || 'c-' + hash(c.snippet), label: str(c.label, 160), lang: str(c.lang, 20) || 'text', snippet: str(c.snippet, 6000), ...withTs(c) })).filter((c) => c.snippet),
+    links,
+    caveats: arr(v.caveats).map((c) => ({ type: str(c.type, 30) || 'Update', text: str(c.text, 800), sources: srcList(c.sources) })).filter((c) => c.text),
+    furtherReading: arr(v.furtherReading).map((r) => ({ title: str(r.title, 200), why: str(r.why, 400), sources: srcList(r.sources).length ? srcList(r.sources) : [], suggestedUrl: arr(r.sources).length ? null : safeUrl(r.url || r.suggestedUrl) })).filter((r) => r.title),
+    webQueries: arr(v.webQueries).map((q) => str(q, 200)).filter(Boolean),
+    learningPath: { prerequisites: arr(v.learningPath?.prerequisites).map((x) => str(x, 200)).filter(Boolean), nextSteps: arr(v.learningPath?.nextSteps).map((x) => str(x, 200)).filter(Boolean) },
+    quotes: arr(v.quotes).map((q) => ({ text: str(q.text, 500).replace(/^["“]|["”]$/g, ''), verified: q.verified === true ? true : q.verified === false ? false : null, ...withTs(q) })).filter((q) => q.text),
+    chapters: arr(v.chapters).map((c) => ({ title: str(c.title, 160), summary: str(c.summary, 400), ...withTs(c) })).filter((c) => c.title),
+    transcript,
+    flashcards: arr(v.flashcards).map((c) => ({ q: str(c.q, 500), a: str(c.a, 1200), ...withTs(c) })).filter((c) => c.q && c.a),
+    quiz: arr(v.quiz).map((q) => ({ q: str(q.q, 400), options: arr(q.options).map((o) => str(o, 200)).filter(Boolean).slice(0, 6), answer: Number(q.answer), explain: str(q.explain, 500) }))
+      .filter((q) => q.q && q.options.length >= 2 && Number.isInteger(q.answer) && q.answer >= 0 && q.answer < q.options.length),
+  };
+}
+
+/* ============================== Samples ============================== */
+const SAMPLES = [
+  {
+    sample: true, id: 'WGeaxGgg4oI', title: 'Essential Services for Data Engineer on Google Cloud (GCP)', channel: 'GCP Data Engineering', topic: 'Data engineering',
+    sourceLabel: 'Sample analysis', coreThesis: 'Good data engineering on Google Cloud means matching the right serverless building block — Pub/Sub, Dataflow, Composer or BigQuery — to your latency and transformation needs, instead of running clusters you have to babysit.',
+    summary: 'A tour of the core GCP data stack: Cloud Storage as the landing zone, Pub/Sub for decoupled event ingestion, Dataflow (Apache Beam) for batch and streaming transforms, BigQuery as the serverless warehouse, and Cloud Composer (Airflow) for orchestration.',
+    shifts: [
+      { before: 'Reach for Dataflow on every Pub/Sub-to-BigQuery pipeline.', after: 'Use a BigQuery subscription for raw ingestion, and save Dataflow for windowing and stateful transforms.', timestamp: '06:40' },
+      { before: 'Keep Hadoop or Spark clusters running for nightly batch ETL.', after: 'Load to BigQuery and transform in SQL, or use Dataflow jobs that scale down when they finish.', timestamp: '11:15' },
+    ],
+    insights: [
+      { id: 'g1', category: 'Ingestion', timestamp: '02:10', title: 'Pub/Sub decouples producers from consumers', body: 'Pub/Sub absorbs spikes in event volume with at-least-once delivery, so downstream pipelines process at their own pace.' },
+      { id: 'g2', category: 'Processing', timestamp: '06:40', title: 'One pipeline model for batch and streaming', body: 'Dataflow runs Apache Beam pipelines in either mode, with worker autoscaling and dynamic work rebalancing.' },
+      { id: 'g3', category: 'Warehouse', timestamp: '11:15', title: 'BigQuery separates storage from compute', body: 'Columnar storage is durable and query slots are allocated on demand, so there is no cluster to size.' },
+    ],
+    playbook: [
+      { when: 'You only need raw events in BigQuery and will transform later in SQL', do: 'Create a Pub/Sub BigQuery subscription and deduplicate at query time.', priority: 'High', timestamp: '06:40' },
+      { when: 'You need windowing, deduplication or multi-step stream transforms', do: 'Use Pub/Sub → Dataflow → BigQuery.', priority: 'High', timestamp: '06:40' },
+      { when: 'Streaming volume is low and bursty', do: 'Consider Cloud Run instead of a streaming Dataflow job, which keeps workers running when idle.', priority: 'Normal' },
+      { when: '', do: 'Land raw files in Cloud Storage before loading them into partitioned, clustered BigQuery tables.', priority: 'Normal', timestamp: '02:10' },
+    ],
+    frameworks: [
+      { name: 'The GCP streaming path', desc: 'Pub/Sub (ingest) → Dataflow (transform, window) → BigQuery (store, query) → Looker (report).' },
+      { name: 'ELT on BigQuery', desc: 'Load raw data first, then transform with SQL or Dataform inside the warehouse.' },
+    ],
+    code: [
+      { label: 'Create a BigQuery subscription on an existing topic', lang: 'bash', snippet: 'gcloud pubsub subscriptions create events-to-bq \\\n  --topic=events \\\n  --bigquery-table=my-project:analytics.raw_events', timestamp: '06:55' },
+    ],
+    links: [
+      { title: 'BigQuery', url: 'https://cloud.google.com/bigquery', type: 'Docs', context: 'The serverless warehouse used throughout.', origin: 'description' },
+      { title: 'Pub/Sub', url: 'https://cloud.google.com/pubsub', type: 'Docs', context: 'Event ingestion for streaming pipelines.', origin: 'description' },
+      { title: 'Dataflow', url: 'https://cloud.google.com/dataflow', type: 'Tool', context: 'Managed Apache Beam runner.', origin: 'spoken' },
+    ],
+    caveats: [
+      { type: 'Cost', text: 'Streaming Dataflow jobs keep at least one worker running, so they never scale to zero when no data arrives.', sources: [{ title: 'cloud.google.com', url: 'https://cloud.google.com/dataflow/docs/horizontal-autoscaling' }] },
+      { type: 'Delivery', text: 'BigQuery subscriptions can write duplicates, so downstream views should deduplicate on message ID.', sources: [{ title: 'cloud.google.com', url: 'https://cloud.google.com/pubsub/docs/bigquery' }] },
+    ],
+    furtherReading: [
+      { title: 'BigQuery subscriptions', why: 'How to stream Pub/Sub messages straight into a table, with schema options.', sources: [{ title: 'cloud.google.com', url: 'https://cloud.google.com/pubsub/docs/bigquery' }] },
+      { title: 'Dataflow overview', why: 'Exactly-once versus at-least-once modes and how autoscaling works.', sources: [{ title: 'cloud.google.com', url: 'https://cloud.google.com/dataflow/docs/overview' }] },
+    ],
+    learningPath: { prerequisites: ['SQL and columnar storage basics', 'Cloud IAM and service accounts', 'JSON, Avro and Parquet formats'], nextSteps: ['BigQuery partitioning and clustering', 'Orchestration with Cloud Composer', 'Build a Pub/Sub → Dataflow → BigQuery lab'] },
+    quotes: [{ timestamp: '06:50', text: 'Dataflow runs Apache Beam pipelines seamlessly for both batch and streaming workloads.', verified: true }],
+    chapters: [
+      { timestamp: '00:00', title: 'The GCP data landscape', summary: 'Storage, ingestion, processing and analytics.' },
+      { timestamp: '02:10', title: 'Pub/Sub and Cloud Storage', summary: 'Landing batch files and streaming events.' },
+      { timestamp: '06:40', title: 'Dataflow and Apache Beam', summary: 'Unified batch and stream transforms.' },
+      { timestamp: '11:15', title: 'BigQuery and orchestration', summary: 'Serverless warehousing and Composer.' },
+    ],
+    transcript: [
+      { timestamp: '00:00', text: 'Welcome to this overview of essential Google Cloud services for data engineers.' },
+      { timestamp: '02:10', text: 'Pub/Sub acts as the durable messaging backbone for real-time event ingestion.' },
+      { timestamp: '06:50', text: 'Dataflow runs Apache Beam pipelines seamlessly for both batch and streaming workloads.' },
+      { timestamp: '11:15', text: 'BigQuery lets you run petabyte-scale SQL analytics without managing servers.' },
+    ],
+    flashcards: [
+      { q: 'When is a Pub/Sub BigQuery subscription a better fit than Dataflow?', a: 'When you only need raw events in BigQuery and will transform later in SQL — no pre-write filtering, windowing or complex transforms.', timestamp: '06:40' },
+      { q: 'What is the main cost caveat of streaming Dataflow jobs?', a: 'They don\'t scale to zero: at least one worker keeps running even when no data arrives.' },
+      { q: 'Why deduplicate downstream of a BigQuery subscription?', a: 'Delivery is at-least-once, so the same message can be written more than once.' },
+    ],
+    quiz: [
+      { q: 'Which service runs Apache Beam pipelines for both batch and streaming?', options: ['BigQuery', 'Dataflow', 'Cloud Storage', 'Looker'], answer: 1, explain: 'Dataflow is the managed runner for Apache Beam.' },
+      { q: 'Where should raw files land before loading to BigQuery?', options: ['Cloud Storage', 'Pub/Sub', 'Memorystore', 'Cloud SQL'], answer: 0, explain: 'Cloud Storage is the durable landing zone in this architecture.' },
+    ],
+  },
+  {
+    sample: true, id: 'zjkBMFhNj_g', title: '[1hr Talk] Intro to Large Language Models', channel: 'Andrej Karpathy', topic: 'AI engineering',
+    sourceLabel: 'Sample analysis', coreThesis: 'An LLM is best understood not as a chatbot but as the kernel of a new kind of operating system that coordinates tools, memory and multimodal input and output.',
+    summary: 'How LLMs are built (pre-training compresses internet text into weights, then fine-tuning and preference training shape an assistant), how they scale, and why tool use and multimodality turn them into an "LLM OS" — along with new security problems like prompt injection.',
+    shifts: [{ before: 'Treat an LLM as a text-in, text-out chatbot.', after: 'Treat it as a kernel that orchestrates context (RAM), tools and retrieval (disk).', timestamp: '42:00' }],
+    insights: [
+      { id: 'k1', category: 'Core concept', timestamp: '01:40', title: 'A model is two files', body: 'An open-weights model like Llama 2 70B is a ~140 GB parameters file (2 bytes per weight) plus a few hundred lines of code to run it.' },
+      { id: 'k2', category: 'Training', timestamp: '12:30', title: 'Pre-training versus fine-tuning', body: 'Pre-training is expensive, lossy compression of ~10 TB of text. Fine-tuning on ~100k curated conversations teaches the assistant format.' },
+      { id: 'k3', category: 'Security', timestamp: '45:00', title: 'Instructions and data share one channel', body: 'Because untrusted content and instructions arrive as the same tokens, models are open to prompt injection and data poisoning.' },
+    ],
+    playbook: [
+      { when: 'Estimating memory for an open-weights model in FP16', do: 'Multiply the parameter count by 2 bytes (70B ≈ 140 GB).', priority: 'High', timestamp: '01:40' },
+      { when: 'Your LLM reads web pages or documents', do: 'Treat retrieved text as untrusted input and keep it away from tool permissions.', priority: 'High', timestamp: '45:00' },
+    ],
+    frameworks: [{ name: 'LLM as operating system', desc: 'Model = kernel, context window = RAM, tools = peripherals, vector store = disk.' }],
+    code: [],
+    links: [{ title: "Andrej Karpathy's site", url: 'https://karpathy.ai/', type: 'Resource', context: 'Links to slides and related talks.', origin: 'description' }],
+    caveats: [{ type: 'Update', text: 'Since this 2023 talk, reasoning models trained with reinforcement learning and native tool-calling agents have become standard.', sources: [] }],
+    furtherReading: [{ title: "Simon Willison's notes on the talk", why: 'Timestamped companion notes with the security takeaways.', sources: [{ title: 'simonwillison.net', url: 'https://simonwillison.net/2023/Nov/23/intro-to-large-language-models/' }] }],
+    learningPath: { prerequisites: ['Basic neural networks', 'Python'], nextSteps: ['Build a small tool-calling agent', 'Read about prompt-injection defences'] },
+    quotes: [{ timestamp: '42:10', text: 'Think of the LLM as the kernel process of an emerging operating system.', verified: null }],
+    chapters: [
+      { timestamp: '00:00', title: 'Inference and parameters', summary: 'Weights plus a small run script.' },
+      { timestamp: '12:30', title: 'How models are trained', summary: 'Pre-training, fine-tuning, preference training.' },
+      { timestamp: '42:00', title: 'The LLM OS', summary: 'Tools, memory and multimodality.' },
+      { timestamp: '45:00', title: 'Security', summary: 'Jailbreaks, prompt injection, poisoning.' },
+    ],
+    transcript: [],
+    flashcards: [
+      { q: 'Roughly how large are 70B-parameter weights in FP16?', a: 'About 140 GB — 70 billion × 2 bytes.', timestamp: '01:40' },
+      { q: 'In the LLM-OS analogy, what plays the role of RAM?', a: 'The context window.', timestamp: '42:00' },
+    ],
+    quiz: [{ q: 'Why are LLMs vulnerable to prompt injection?', options: ['They are trained on code', 'Instructions and untrusted data share the same token stream', 'They have small context windows', 'They run on GPUs'], answer: 1, explain: 'The model can\'t reliably tell instructions apart from data it reads.' }],
+  },
+];
+
+/* ============================== Text extraction ============================== */
+function parseTranscriptText(raw) {
+  const out = []; let sec = 0;
+  const tsRe = /^\[?(\d{1,2}:\d{2}(?::\d{2})?)(?:[.,]\d+)?\]?/;
+  for (const line of String(raw || '').split(/\r?\n/)) {
+    const t = line.trim();
+    if (!t || t === 'WEBVTT' || /^\d+$/.test(t) || /^(NOTE|Kind:|Language:)/.test(t)) continue;
+    if (t.includes('-->')) { sec = parseTs(t.split('-->')[0].trim().split(/[.,]/)[0]); continue; }
+    const m = t.match(tsRe);
+    let text = t;
+    if (m) { sec = parseTs(m[1]); text = t.slice(m[0].length).replace(/^[\s\-:]+/, ''); }
+    text = text.replace(/<[^>]+>/g, '').trim();
+    if (!text) continue;
+    const last = out[out.length - 1];
+    if (last && last.seconds === sec && last.text.length < 400) last.text += ' ' + text; // merge cue fragments
+    else out.push({ timestamp: fmtTs(sec), seconds: sec, text });
+  }
+  // Drop rolling-caption duplicates common in auto-generated VTT.
+  return out.filter((e, i) => i === 0 || e.text !== out[i - 1].text);
+}
+
+function classifyLink(u) {
+  const l = u.toLowerCase();
+  if (/github\.com|gitlab\.com|bitbucket\.org/.test(l)) return 'Repo';
+  if (/arxiv\.org|doi\.org|\.pdf($|\?)|papers\.|openreview\.net/.test(l)) return 'Paper';
+  if (/docs\.|\/docs?\b|developer\.|readthedocs|learn\.microsoft|cloud\.google\.com\/[a-z-]+\/docs/.test(l)) return 'Docs';
+  if (/npmjs\.com|pypi\.org|crates\.io|hub\.docker/.test(l)) return 'Tool';
+  return 'Resource';
+}
+const SOCIAL = /(youtube\.com\/(subscribe|channel|@|c\/)|instagram\.com|tiktok\.com|facebook\.com|twitter\.com|x\.com\/[^/]+\/?$|discord\.gg|patreon\.com|linktr\.ee)/i;
+function extractLinks(text, origin) {
+  const out = [], seen = new Set();
+  for (const line of String(text || '').split(/\r?\n/)) {
+    for (const raw of line.match(/https?:\/\/[^\s<>"'`)\]]+/gi) || []) {
+      const url = safeUrl(raw.replace(/[.,;:!?]+$/, ''));
+      if (!url || SOCIAL.test(url)) continue;
+      const k = urlKey(url); if (seen.has(k)) continue; seen.add(k);
+      const ctx = line.replace(raw, '').replace(/^[\s\-–—:•*|>]+|[\s\-–—:•*|]+$/g, '').trim();
+      out.push({ title: ctx.length >= 12 ? ctx.slice(0, 80) : hostOf(url) + new URL(url).pathname.replace(/\/$/, ''), url, type: classifyLink(url), context: ctx, origin });
+    }
+  }
+  return out;
+}
+function mergeLinks(...lists) {
+  const map = new Map();
+  for (const l of lists.flat()) {
+    if (!l || !l.url) continue;
+    const k = urlKey(l.url);
+    if (!map.has(k)) map.set(k, { ...l });
+    else if (l.origin === 'description') map.get(k).origin = 'description'; // the creator's own list is the strongest evidence
+  }
+  return [...map.values()];
+}
+
+const normText = (s) => String(s || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+function verifyQuotes(quotes, transcript) {
+  if (!transcript.length) return quotes.map((q) => ({ ...q, verified: null }));
+  const full = normText(transcript.map((t) => t.text).join(' '));
+  return quotes.map((q) => {
+    const n = normText(q.text);
+    const ok = n.length > 12 && full.includes(n);
+    if (!ok) return null; // drop quotes we can't find word for word
+    const hit = transcript.find((t) => normText(t.text).includes(n.slice(0, 30)));
+    return { ...q, verified: true, ...(hit ? { timestamp: hit.timestamp, seconds: hit.seconds } : {}) };
+  }).filter(Boolean);
+}
+// Move a model-given timestamp to the transcript line within ±90s that best matches the item's wording.
+function snapToTranscript(items, transcript, textOf) {
+  if (!transcript.length) return items;
+  const stop = new Set('the a an and or of to in on for is are be with that this it as at by from you your we'.split(' '));
+  const words = (s) => new Set(normText(s).split(' ').filter((w) => w.length > 2 && !stop.has(w)));
+  return items.map((it) => {
+    if (it.seconds == null) return it;
+    const target = words(textOf(it)); if (!target.size) return it;
+    let best = null, bestScore = 0;
+    for (const t of transcript) {
+      if (Math.abs(t.seconds - it.seconds) > 90) continue;
+      let s = 0; for (const w of words(t.text)) if (target.has(w)) s++;
+      if (s > bestScore) { bestScore = s; best = t; }
+    }
+    return best && bestScore >= 2 ? { ...it, timestamp: best.timestamp, seconds: best.seconds } : it;
+  });
+}
+
+/* ============================== Gemini ============================== */
+async function gemini(body, model = state.model) {
+  if (!state.apiKey) throw new Error('Add a Gemini API key in settings first.');
+  let res;
+  try {
+    res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': state.apiKey }, body: JSON.stringify(body),
+    });
+  } catch { throw new Error("Couldn't reach Gemini. Check your connection."); }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error?.message ? `Gemini: ${data.error.message}` : `Gemini returned an error (${res.status}).`);
+  const cand = data.candidates?.[0];
+  if (!cand) throw new Error(data.promptFeedback?.blockReason ? `Gemini declined the request (${data.promptFeedback.blockReason}).` : 'Gemini returned no answer.');
+  const text = arr(cand.content?.parts).filter((p) => typeof p.text === 'string' && !p.thought).map((p) => p.text).join('');
+  return { text, grounding: cand.groundingMetadata || null, finish: cand.finishReason };
+}
+function parseJsonLoose(text) {
+  const t = String(text || '').replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
+  try { return JSON.parse(t); } catch {}
+  const a = t.indexOf('{'), b = t.lastIndexOf('}');
+  if (a >= 0 && b > a) { try { return JSON.parse(t.slice(a, b + 1)); } catch {} }
+  throw new Error("Gemini's answer wasn't valid JSON.");
+}
+
+const EXTRACT_SCHEMA = `{
+"coreThesis": "1-2 sentences: the central argument",
+"summary": "one paragraph",
+"shifts": [{"before": "belief or habit before watching", "after": "what to believe or do instead", "timestamp": "MM:SS"}],
+"insights": [{"id": "i1", "category": "short label", "timestamp": "MM:SS", "title": "", "body": "1-3 sentences"}],
+"playbook": [{"when": "situation (may be empty)", "do": "concrete action", "priority": "High|Normal", "timestamp": "MM:SS"}],
+"frameworks": [{"name": "", "desc": ""}],
+"code": [{"label": "what it does", "lang": "bash|python|sql|yaml|js|…", "snippet": "verbatim code or command", "timestamp": "MM:SS"}],
+"links": [{"title": "", "url": "https://…", "type": "Repo|Docs|Tool|Paper|Resource", "context": "why it was mentioned", "origin": "description|spoken|video"}],
+"quotes": [{"text": "verbatim words", "timestamp": "MM:SS"}],
+"chapters": [{"timestamp": "MM:SS", "title": "", "summary": ""}],
+"flashcards": [{"q": "", "a": "", "timestamp": "MM:SS"}],
+"quiz": [{"q": "", "options": ["", "", "", ""], "answer": 0, "explain": ""}],
+"researchTopics": ["things worth checking on today's web: tool versions, deprecations, pricing, official docs"]
+}`;
+
+async function extractPass({ id, url, meta, transcriptText, description, lens }) {
+  const prompt = `You are building a study guide from a YouTube video for ${LENSES[lens]}.
+Video: ${url}${meta.title ? `\nTitle: ${meta.title}` : ''}${meta.author_name ? `\nChannel: ${meta.author_name}` : ''}
+${description ? `\nCreator's description:\n${description.slice(0, 12000)}\n` : ''}${transcriptText ? `\nTranscript (timestamps in brackets):\n${transcriptText}\n` : ''}
+Rules:
+- Only include what the video actually says or shows. Do not add outside knowledge here.
+- Timestamps are MM:SS or H:MM:SS and point to where the idea appears.
+- "code": copy commands, code and config exactly as shown or spoken. Empty array if none.
+- "links": every URL in the description plus any site, repo or tool the speaker names with a findable URL. Never invent URLs.
+- "quotes": exact words only, 2-4 of them.
+- 4-8 insights, 3-8 playbook items, 2-4 shifts, 6-10 flashcards, 4-6 quiz questions.
+Return only JSON in this shape:
+${EXTRACT_SCHEMA}`;
+  const parts = [];
+  if (!transcriptText) parts.push({ file_data: { file_uri: `https://www.youtube.com/watch?v=${id}` } });
+  parts.push({ text: prompt });
+  const body = { contents: [{ role: 'user', parts }], generationConfig: { responseMimeType: 'application/json', temperature: 0.2 } };
+  let r = await gemini(body);
+  try { return parseJsonLoose(r.text); }
+  catch {
+    r = await gemini(body); // one retry; models occasionally truncate or wrap JSON
+    return parseJsonLoose(r.text);
+  }
+}
+
+// Pass 2: grounded web check. Free text (not JSON mode) so Gemini returns citation metadata.
+async function webPass(v, topics) {
+  const prompt = `Today is ${todayKey()}. Check this YouTube tutorial against the current web using Google Search.
+Title: ${v.title}
+Channel: ${v.channel}
+Central claim: ${v.coreThesis}
+Topics to check: ${[...topics, ...v.links.slice(0, 8).map((l) => l.title)].filter(Boolean).join('; ')}
+
+Reply with ONLY lines in these formats, one item per line, nothing else:
+CAVEAT|Update or Deprecation or Cost or Correction|one or two sentences on what has changed or what to watch for, with dates where known
+READ|title of an official doc or high-quality page|why it's worth reading
+PREREQ|something to know before this video
+NEXT|what to learn after this video
+Give 2-5 CAVEAT lines, 3-6 READ lines, 2-4 PREREQ lines and 2-4 NEXT lines.`;
+  const r = await gemini({ contents: [{ role: 'user', parts: [{ text: prompt }] }], tools: [{ google_search: {} }], generationConfig: { temperature: 0.2 } });
+  const g = r.grounding || {};
+  const chunks = arr(g.groundingChunks).map((c) => ({ title: str(c.web?.title, 120) || hostOf(c.web?.uri), url: safeUrl(c.web?.uri) }));
+  const supports = arr(g.groundingSupports).map((s) => ({ text: str(s.segment?.text, 2000), idx: arr(s.groundingChunkIndices) })).filter((s) => s.text);
+  const sourcesFor = (line) => {
+    const out = new Map();
+    for (const s of supports) {
+      const seg = s.text.replace(/^[A-Z]+\|/, '').trim();
+      if (seg.length < 8 || !(line.includes(seg) || seg.includes(line))) continue;
+      for (const i of s.idx) { const c = chunks[i]; if (c?.url && !out.has(c.url)) out.set(c.url, c); }
+    }
+    return [...out.values()].slice(0, 4);
+  };
+  const res = { caveats: [], furtherReading: [], learningPath: { prerequisites: [], nextSteps: [] }, webQueries: arr(g.webSearchQueries) };
+  for (const raw of r.text.split(/\r?\n/)) {
+    const line = raw.replace(/^[\s*\-•]+/, '').trim();
+    const [kind, a, b] = line.split('|').map((x) => (x || '').trim());
+    if (kind === 'CAVEAT' && b) res.caveats.push({ type: a, text: b, sources: sourcesFor(line.slice(line.indexOf(b))) });
+    else if (kind === 'READ' && a) res.furtherReading.push({ title: a, why: b, sources: sourcesFor(line) });
+    else if (kind === 'PREREQ' && a) res.learningPath.prerequisites.push(a);
+    else if (kind === 'NEXT' && a) res.learningPath.nextSteps.push(a);
+  }
+  return res;
+}
+
+async function fetchMeta(id) {
+  const url = encodeURIComponent(`https://www.youtube.com/watch?v=${id}`);
+  for (const ep of [`https://www.youtube.com/oembed?format=json&url=${url}`, `https://noembed.com/embed?url=${url}`]) {
+    try { const r = await fetch(ep); if (r.ok) { const j = await r.json(); if (j.title) return j; } } catch {}
+  }
+  return {};
+}
+
+async function analyzeVideo({ url, lens, description, transcriptRaw }, onStatus) {
+  const id = extractYoutubeId(url);
+  if (!id) throw new Error("That doesn't look like a YouTube link.");
+  onStatus('Looking up the video…');
+  const meta = await fetchMeta(id);
+  const transcript = transcriptRaw ? parseTranscriptText(transcriptRaw) : [];
+  const notesOnSource = [];
+  const LIMIT = 150000;
+  let transcriptText = transcript.map((t) => `[${t.timestamp}] ${t.text}`).join('\n');
+  if (transcriptText.length > LIMIT) { transcriptText = transcriptText.slice(0, LIMIT); notesOnSource.push(`Transcript was longer than ${LIMIT / 1000}k characters; the analysis covers the first part only.`); }
+  if (!transcript.length) notesOnSource.push('Gemini watched the video directly. Add a transcript to check quotes word for word and get exact timestamps.');
+
+  if (!state.apiKey) {
+    if (!transcript.length && !description) throw new Error('Without a Gemini key, paste a transcript or description to analyze.');
+    onStatus('Extracting without AI…');
+    return offlineAnalysis(id, meta, transcript, description, lens);
+  }
+
+  onStatus(transcript.length ? 'Reading the transcript…' : 'Watching the video… long videos can take a minute.');
+  const raw = await extractPass({ id, url, meta, transcriptText, description, lens });
+  let v = normalizeVideo({ ...raw, id, title: meta.title, channel: meta.author_name, lens, transcript, links: [], analyzedAt: Date.now(), model: state.model });
+  const aiLinks = normalizeVideo({ id, links: raw.links }).links;
+  v.links = mergeLinks(extractLinks(description, 'description'), aiLinks, extractLinks(transcript.map((t) => t.text).join('\n'), 'spoken'));
+  v.quotes = verifyQuotes(v.quotes, transcript);
+  v.insights = snapToTranscript(v.insights, transcript, (i) => i.title + ' ' + i.body);
+  v.code = snapToTranscript(v.code, transcript, (c) => c.label + ' ' + c.snippet);
+
+  onStatus('Checking the web for updates and sources…');
+  try {
+    const web = await webPass(v, arr(raw.researchTopics).map((t) => str(t, 200)));
+    v = normalizeVideo({ ...v, ...web });
+  } catch (e) {
+    notesOnSource.push(`The web check didn't finish (${e.message}). Re-analyze to try again.`);
+  }
+  v.notesOnSource = notesOnSource;
+  v.sourceLabel = `${transcript.length ? 'Transcript' : 'Video'} + web check, ${state.model}`;
+  return v;
+}
+
+function offlineAnalysis(id, meta, transcript, description, lens) {
+  const sentences = transcript.flatMap((t) => t.text.split(/(?<=[.!?])\s+/).map((s) => ({ s: s.trim(), t })) ).filter((x) => x.s.length > 40);
+  const signal = /\b(key|important|because|therefore|principle|mistake|always|never|remember|crucial|the reason|trick)\b/i;
+  const action = /\b(should|need to|must|make sure|avoid|don't|start by|use|try)\b/i;
+  const scored = sentences.map((x, i) => ({ ...x, i, score: Math.min(x.s.length / 60, 2) + (signal.test(x.s) ? 3 : 0) }));
+  const top = [...scored].sort((a, b) => b.score - a.score).slice(0, 6).sort((a, b) => a.i - b.i);
+  const step = Math.max(1, Math.ceil(transcript.length / 5));
+  return normalizeVideo({
+    id, title: meta.title, channel: meta.author_name, lens, analyzedAt: Date.now(), sourceLabel: 'Basic extraction (no AI)',
+    notesOnSource: ['Analyzed without Gemini: insights are sentences picked from the transcript, not a real summary. Add a key in settings for the full study guide.'],
+    coreThesis: top[0]?.s || '', summary: top.slice(0, 3).map((x) => x.s).join(' ') || description.slice(0, 400),
+    insights: top.map((x, n) => ({ id: 'o' + n, category: 'From transcript', title: x.s.split(/[,.;:]/)[0].slice(0, 80), body: x.s, seconds: x.t.seconds })),
+    playbook: scored.filter((x) => action.test(x.s)).slice(0, 6).map((x) => ({ do: x.s, seconds: x.t.seconds })),
+    links: mergeLinks(extractLinks(description, 'description'), extractLinks(transcript.map((t) => t.text).join('\n'), 'spoken')),
+    chapters: transcript.filter((_, i) => i % step === 0).map((t) => ({ seconds: t.seconds, title: t.text.slice(0, 60), summary: '' })),
+    transcript,
+  });
+}
+
+/* ============================== Player ============================== */
+let playerReady = false;
+function playerFrame() { return $('player-wrap').querySelector('iframe'); }
+function loadPlayer(id) {
+  const wrap = $('player-wrap');
+  const cur = playerFrame();
+  if (cur && cur.dataset.vid === id) return;
+  const origin = /^https?:/.test(location.origin) ? `&origin=${encodeURIComponent(location.origin)}` : '';
+  wrap.innerHTML = `<iframe data-vid="${esc(id)}" title="YouTube player" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen
+    src="https://www.youtube-nocookie.com/embed/${esc(id)}?enablejsapi=1&rel=0&modestbranding=1${origin}"></iframe>`;
+  playerReady = false; state.playerTime = null;
+  playerFrame().addEventListener('load', () => {
+    playerReady = true;
+    // Ask the player to stream its state (currentTime) back to us.
+    playerFrame().contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 'td', channel: 'widget' }), '*');
+  });
+}
+window.addEventListener('message', (e) => {
+  if (!/youtube(-nocookie)?\.com$/.test(new URL(e.origin || 'http://x').host)) return;
+  try {
+    const d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+    if (d?.info && typeof d.info.currentTime === 'number') state.playerTime = d.info.currentTime;
+  } catch {}
+});
+function seek(sec) {
+  const f = playerFrame();
+  if (!f) return;
+  if (window.matchMedia('(max-width: 1180px)').matches) $('side-inline').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const post = (func, args) => f.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args }), '*');
+  post('seekTo', [sec, true]); post('playVideo', []);
+  state.playerTime = sec;
+}
+const tsBtn = (item) => (item && item.seconds != null ? `<button class="ts" data-seek="${item.seconds}" title="Play from ${esc(item.timestamp)}"><i data-lucide="play"></i>${esc(item.timestamp)}</button>` : '');
+
+/* ============================== Spaced repetition (SM-2) ============================== */
+const NEW_PER_DAY = 20;
+const cardKey = (vid, card) => `${vid}:${hash(card.q)}`;
+function schedule(rec, grade) { // grade: 1 again, 3 hard, 4 good, 5 easy
+  const r = rec ? { ...rec } : { reps: 0, interval: 0, ease: 2.5, lapses: 0 };
+  if (grade < 3) { r.reps = 0; r.interval = 0; r.lapses = (r.lapses || 0) + 1; r.due = Date.now() + 10 * 60000; }
+  else {
+    r.reps += 1;
+    if (r.reps === 1) r.interval = grade === 5 ? 3 : 1;
+    else if (r.reps === 2) r.interval = grade === 5 ? 8 : grade === 3 ? 3 : 6;
+    else r.interval = Math.max(r.interval + 1, Math.round(r.interval * r.ease * (grade === 3 ? 0.8 : grade === 5 ? 1.3 : 1)));
+    r.ease = Math.max(1.3, r.ease + (0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02)));
+    r.due = Date.now() + r.interval * DAY;
+  }
+  r.last = Date.now();
+  return r;
+}
+const intervalLabel = (rec, grade) => { const r = schedule(rec, grade); return grade < 3 ? '10 min' : r.interval === 1 ? '1 day' : `${r.interval} days`; };
+
+function allCards(scopeVid = null) {
+  const out = [];
+  for (const v of state.library) {
+    if (scopeVid && v.id !== scopeVid) continue;
+    v.flashcards.forEach((c) => out.push({ key: cardKey(v.id, c), card: c, video: v, rec: state.srs[cardKey(v.id, c)] }));
+  }
+  return out;
+}
+function dueQueue(scopeVid = null) {
+  const now = Date.now(), log = state.reviewLog[todayKey()] || { reviewed: 0, newSeen: 0 };
+  const cards = allCards(scopeVid);
+  const due = cards.filter((c) => c.rec && c.rec.due <= now).sort((a, b) => a.rec.due - b.rec.due);
+  const fresh = cards.filter((c) => !c.rec).slice(0, Math.max(0, NEW_PER_DAY - log.newSeen));
+  return [...due, ...fresh];
+}
+function updateDueBadge() {
+  const n = dueQueue().length, b = $('due-count');
+  b.textContent = n; b.classList.toggle('zero', n === 0);
+}
+function startSession(scope) {
+  state.session = { scope, queue: dueQueue(scope === 'all' ? null : scope).map((c) => c.key), revealed: false, practice: false };
+}
+function startPractice(vid) {
+  state.session = { scope: vid, queue: allCards(vid).map((c) => c.key), revealed: false, practice: true };
+}
+function renderReview(containerId) {
+  const box = $(containerId), s = state.session;
+  const lookup = new Map(allCards().map((c) => [c.key, c]));
+  while (s && s.queue.length && !lookup.has(s.queue[0])) s.queue.shift();
+  if (!s || !s.queue.length) {
+    const total = allCards(s && s.scope !== 'all' ? s.scope : null).length;
+    box.innerHTML = total
+      ? `<div class="empty"><strong>Nothing due right now</strong>Cards come back on their own schedule. ${s && s.scope !== 'all' ? `<div style="margin-top:12px"><button class="btn btn-sm" data-action="practice" data-vid="${esc(s.scope)}">Practice all ${total} anyway</button></div>` : ''}</div>`
+      : `<div class="empty"><strong>No flashcards yet</strong>Analyze a video and its cards will show up here.</div>`;
+    icons(); return;
+  }
+  const c = lookup.get(s.queue[0]);
+  box.innerHTML = `<div class="review">
+    <div class="meta"><span>${s.queue.length} left</span>${s.scope === 'all' ? `<button class="btn btn-quiet btn-sm" data-action="open-video" data-vid="${esc(c.video.id)}">${esc(c.video.title)}</button>` : ''}${tsBtn(c.card)}${c.rec ? '' : '<span class="origin">New</span>'}</div>
+    <div class="qtext">${esc(c.card.q)}</div>
+    ${s.revealed ? `<div class="atext">${esc(c.card.a)}</div>
+      <div class="grades">${[[1, 'Again'], [3, 'Hard'], [4, 'Good'], [5, 'Easy']].map(([g, l]) => `<button class="grade" data-action="grade" data-grade="${g}" data-box="${containerId}">${l}<small>${s.practice ? '&nbsp;' : intervalLabel(c.rec, g)}</small></button>`).join('')}</div>`
+      : `<div class="grades" style="grid-template-columns:1fr"><button class="btn btn-primary" data-action="reveal" data-box="${containerId}">Show answer <span style="opacity:.6;font-weight:400">Space</span></button></div>`}
+  </div>`;
+  icons();
+}
+function gradeCard(grade, boxId) {
+  const s = state.session; if (!s || !s.queue.length) return;
+  const key = s.queue.shift();
+  if (!s.practice) {
+    const prev = state.srs[key];
+    state.srs[key] = schedule(prev, grade);
+    const log = state.reviewLog[todayKey()] ||= { reviewed: 0, newSeen: 0 };
+    log.reviewed++; if (!prev) log.newSeen++;
+    persist('srs'); persist('reviewLog');
+    if (grade < 3) s.queue.push(key); // see it again this session
+  } else if (grade < 3) s.queue.push(key);
+  s.revealed = false;
+  renderReview(boxId); updateDueBadge();
+  if (state.view === 'today') renderTodayStats();
+}
+
+/* ============================== Views ============================== */
+function setView(view) {
+  state.view = view;
+  $('today-view').hidden = view !== 'today';
+  $('video-view').hidden = view !== 'video';
+  $('empty-view').hidden = view !== 'empty';
+  $('nav-today').setAttribute('aria-current', view === 'today');
+  $('rail').classList.remove('open');
+  $('main').scrollTop = 0;
+  placeSide();
+}
+function showToday() {
+  setView('today'); startSession('all'); renderTodayStats(); renderReview('today-review'); renderLibrary();
+}
+function renderTodayStats() {
+  const log = state.reviewLog[todayKey()] || { reviewed: 0 };
+  const cards = allCards();
+  const learned = cards.filter((c) => c.rec && c.rec.interval >= 21).length;
+  $('today-stats').innerHTML = [
+    [dueQueue().length, 'due now'], [log.reviewed, 'reviewed today'], [cards.length, 'cards in library'], [learned, 'remembered for 3+ weeks'],
+  ].map(([n, l]) => `<div class="stat"><b>${n}</b><span>${l}</span></div>`).join('');
+}
+
+function openVideo(id, tab) {
+  const v = state.library.find((x) => x.id === id); if (!v) return;
+  state.current = v; state.insightFilter = 'all'; state.linkFilter = 'all';
+  if (tab) state.tab = tab;
+  ls.set('td_last', id);
+  setView('video'); renderVideo(); renderLibrary();
+}
+function renderVideo() {
+  const v = state.current; if (!v) return;
+  $('v-title').textContent = v.title;
+  $('v-channel').textContent = v.channel;
+  $('v-topic').value = v.topic || '';
+  $('v-open').href = v.url;
+  $('v-source').innerHTML = v.sourceLabel ? `<span class="origin">${esc(v.sourceLabel)}</span>` : '';
+  $('btn-delete').querySelector('span').textContent = 'Delete';
+  $('btn-delete').dataset.armed = '';
+  $('print-head').innerHTML = `<p>${esc(v.channel)} — ${esc(v.url)}</p>`;
+  loadPlayer(v.id);
+  renderUnderstand(); renderAct(); renderRetain(); renderAsk(); renderTranscript(''); renderNotes(); renderChapters();
+  setTab(state.tab);
+  icons();
+}
+function setTab(tab) {
+  state.tab = tab;
+  document.querySelectorAll('.tab').forEach((b) => b.setAttribute('aria-selected', b.dataset.tab === tab));
+  document.querySelectorAll('.panel').forEach((p) => (p.hidden = p.id !== `panel-${tab}`));
+}
+
+function renderUnderstand() {
+  const v = state.current, stars = state.stars[v.id] || {};
+  const cats = [...new Set(v.insights.map((i) => i.category))];
+  const ins = v.insights.filter((i) => state.insightFilter === 'all' || (state.insightFilter === 'starred' ? stars[i.id] : i.category === state.insightFilter));
+  const html = [];
+  if (v.notesOnSource.length) html.push(`<div class="sec-note" style="border-left:3px solid var(--rule);padding-left:12px">${v.notesOnSource.map(esc).join('<br>')}</div>`);
+  if (v.coreThesis) html.push(`<p class="thesis"><span class="hl">${esc(v.coreThesis)}</span></p>`);
+  if (v.summary) html.push(`<div class="prose"><p>${esc(v.summary)}</p></div>`);
+
+  if (v.shifts.length) {
+    html.push(`<h2 class="sec">What changes after watching</h2><div>`);
+    v.shifts.forEach((s) => html.push(`<div class="shift"><div class="before">${esc(s.before)}</div><div class="arrow"><i data-lucide="arrow-right"></i></div><div class="after">${esc(s.after)} ${tsBtn(s)}</div></div>`));
+    html.push('</div>');
+  }
+  if (v.insights.length) {
+    html.push(`<h2 class="sec">Key insights</h2>`);
+    if (cats.length > 1 || Object.keys(stars).length) {
+      html.push(`<div class="chips">${[['all', 'All'], ['starred', 'Starred'], ...cats.map((c) => [c, c])].map(([k, l]) => `<button class="chip" data-action="insight-filter" data-k="${esc(k)}" aria-pressed="${state.insightFilter === k}">${esc(l)}</button>`).join('')}</div>`);
+    }
+    html.push(`<div class="list">${ins.map((i) => `<div class="row"><div class="row-head">${tsBtn(i)}<span class="cat">${esc(i.category)}</span><button class="star ${stars[i.id] ? 'on' : ''}" data-action="star" data-id="${esc(i.id)}" aria-label="${stars[i.id] ? 'Unstar' : 'Star'} insight" aria-pressed="${!!stars[i.id]}"><i data-lucide="star"></i></button></div><h3>${esc(i.title)}</h3><p class="body">${esc(i.body)}</p></div>`).join('') || '<p class="sec-note">No insights match this filter.</p>'}</div>`);
+  }
+  if (v.frameworks.length) {
+    html.push(`<h2 class="sec">Frameworks and mental models</h2><div class="list">${v.frameworks.map((f) => `<div class="row"><h3>${esc(f.name)}</h3><p class="body">${esc(f.desc)}</p></div>`).join('')}</div>`);
+  }
+  if (v.quotes.length) {
+    const checked = v.quotes.some((q) => q.verified);
+    html.push(`<h2 class="sec">In their words</h2><p class="sec-note">${checked ? 'Each quote was found word for word in the transcript.' : 'Not checked against a transcript, so wording may differ slightly.'}</p>`);
+    v.quotes.forEach((q) => html.push(`<blockquote class="q">${esc(q.text)}<div class="q-foot">${tsBtn(q)}<button class="btn btn-quiet btn-sm" data-action="copy-quote" data-text="${esc(`"${q.text}" — ${v.channel}${q.timestamp ? ` (${q.timestamp})` : ''}`)}"><i data-lucide="copy"></i>Copy</button></div></blockquote>`));
+  }
+  $('panel-understand').innerHTML = html.join('') || '<div class="empty"><strong>No analysis yet</strong>Re-analyze this video to fill in this section.</div>';
+  icons();
+}
+
+const ORIGIN_LABEL = { description: 'In description', spoken: 'Said in video', video: 'From video', web: 'From web' };
+function originBadge(o) { return `<span class="origin ${o === 'web' ? 'web' : 'video'}">${ORIGIN_LABEL[o] || 'From video'}</span>`; }
+function sourcesHtml(sources, suggestedUrl) {
+  if (sources.length) return `<div class="sources"><span class="origin web">Source</span>${sources.map((s) => `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.title)}</a>`).join('')}</div>`;
+  return `<div class="sources"><span class="origin unv">No source found</span>${suggestedUrl ? `<a href="${esc(suggestedUrl)}" target="_blank" rel="noopener noreferrer">${esc(hostOf(suggestedUrl))}</a>` : ''}<span style="color:var(--muted)">Treat this as unverified.</span></div>`;
+}
+function renderAct() {
+  const v = state.current, checks = state.checks[v.id] || {};
+  const done = v.playbook.filter((p) => checks[p.id]).length, pct = v.playbook.length ? Math.round((done / v.playbook.length) * 100) : 0;
+  const html = [];
+  if (v.playbook.length) {
+    html.push(`<h2 class="sec">Playbook</h2><p class="sec-note">${done} of ${v.playbook.length} done</p><div class="progress"><div style="width:${pct}%"></div></div><div>`);
+    v.playbook.forEach((p) => html.push(`<label class="check ${checks[p.id] ? 'done' : ''}"><input type="checkbox" data-action="check" data-id="${esc(p.id)}" ${checks[p.id] ? 'checked' : ''} /><div style="flex:1">${p.when ? `<div class="when">When ${esc(p.when.replace(/^when\s+/i, ''))}</div>` : ''}<div class="do">${esc(p.do)}</div><div class="row-head" style="margin:4px 0 0">${p.priority === 'High' ? '<span class="prio">High priority</span>' : ''}${tsBtn(p)}</div></div></label>`));
+    html.push('</div>');
+  }
+  if (v.code.length) {
+    html.push(`<h2 class="sec">Code and commands</h2><p class="sec-note">Copied from the video. Check versions before running.</p>`);
+    v.code.forEach((c, i) => html.push(`<div class="codebox"><div class="codebox-head"><span>${esc(c.label || c.lang)}</span>${tsBtn(c)}<button class="btn btn-sm" data-action="copy-code" data-i="${i}"><i data-lucide="copy"></i>Copy</button></div><pre><code>${esc(c.snippet)}</code></pre></div>`));
+  }
+  const origins = [...new Set(v.links.map((l) => l.origin))];
+  const links = v.links.filter((l) => state.linkFilter === 'all' || l.origin === state.linkFilter);
+  html.push(`<h2 class="sec">Links from the video</h2>`);
+  if (!v.links.length) html.push(`<div class="empty"><strong>No links found</strong>Re-analyze with the video description pasted in to catch everything the creator listed.</div>`);
+  else {
+    if (origins.length > 1) html.push(`<div class="chips">${[['all', `All ${v.links.length}`], ...origins.map((o) => [o, ORIGIN_LABEL[o]])].map(([k, l]) => `<button class="chip" data-action="link-filter" data-k="${k}" aria-pressed="${state.linkFilter === k}">${esc(l)}</button>`).join('')}</div>`);
+    html.push(`<div>${links.map((l) => `<div class="linkrow"><span class="ltype">${esc(l.type)}</span><div style="flex:1;min-width:0"><a class="lt" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">${esc(l.title || hostOf(l.url))}</a><div class="lu">${esc(l.url)}</div>${l.context && l.context !== l.title ? `<p class="small">${esc(l.context)}</p>` : ''}</div>${originBadge(l.origin)}</div>`).join('')}</div>`);
+  }
+  if (v.caveats.length) {
+    html.push(`<h2 class="sec">What's changed since recording</h2><p class="sec-note">Checked against the web when this video was analyzed.</p><div class="list">`);
+    v.caveats.forEach((c) => html.push(`<div class="row"><div class="row-head"><span class="cat" style="font-weight:600;color:var(--warn)">${esc(c.type)}</span></div><p class="body">${esc(c.text)}</p>${sourcesHtml(c.sources)}</div>`));
+    html.push('</div>');
+  }
+  if (v.furtherReading.length) {
+    html.push(`<h2 class="sec">Read next</h2><div class="list">`);
+    v.furtherReading.forEach((r) => html.push(`<div class="row"><h3>${esc(r.title)}</h3>${r.why ? `<p class="small">${esc(r.why)}</p>` : ''}${sourcesHtml(r.sources, r.suggestedUrl)}</div>`));
+    html.push('</div>');
+  }
+  const lp = v.learningPath;
+  if (lp.prerequisites.length || lp.nextSteps.length) {
+    html.push(`<h2 class="sec">Learning path</h2><div class="cols2"><div><h3 style="font-size:15px;margin:8px 0">Know this first</h3><ul class="plain">${lp.prerequisites.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div><div><h3 style="font-size:15px;margin:8px 0">Then learn</h3><ul class="plain">${lp.nextSteps.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div></div>`);
+  }
+  if (v.webQueries.length) html.push(`<details class="how"><summary>How the web check was done</summary><p>Gemini searched for: ${v.webQueries.map(esc).join('; ')}</p></details>`);
+  $('panel-act').innerHTML = html.join('');
+  icons();
+}
+
+function renderRetain() {
+  const v = state.current, cards = allCards(v.id), due = dueQueue(v.id).length;
+  const ans = state.quiz[v.id] || {};
+  const answered = Object.keys(ans).length, right = v.quiz.filter((q, i) => ans[i] === q.answer).length;
+  $('panel-retain').innerHTML = `
+    <h2 class="sec">Flashcards</h2>
+    <p class="sec-note">${cards.length} cards from this video, ${due} due now. They also appear in Today's review alongside your other videos.</p>
+    <div id="video-review"></div>
+    ${v.quiz.length ? `<h2 class="sec">Check yourself</h2><p class="sec-note">${answered ? `${right} of ${v.quiz.length} right` : `${v.quiz.length} questions`}${answered ? ` <button class="btn btn-quiet btn-sm" data-action="reset-quiz">Start over</button>` : ''}</p>
+      <div class="list">${v.quiz.map((q, i) => `<div class="row"><h3>${esc(q.q)}</h3>${q.options.map((o, oi) => {
+        const picked = ans[i]; let cls = '';
+        if (picked !== undefined) cls = oi === q.answer ? 'right' : oi === picked ? 'wrong' : '';
+        return `<button class="quiz-opt ${cls}" data-action="quiz" data-q="${i}" data-o="${oi}" ${picked !== undefined ? 'disabled' : ''}>${esc(o)}</button>`;
+      }).join('')}${ans[i] !== undefined && q.explain ? `<p class="small" style="margin-top:10px">${esc(q.explain)}</p>` : ''}</div>`).join('')}</div>` : ''}`;
+  if (!state.session || state.session.scope !== v.id) startSession(v.id);
+  renderReview('video-review');
+}
+
+function renderAsk() {
+  const v = state.current, msgs = state.chats[v.id] || [];
+  $('chat').innerHTML = (msgs.length ? msgs : [{ role: 'bot', text: `Ask anything about "${v.title}".` }]).map((m) => {
+    const body = esc(m.text).replace(/\[(\d{1,2}:\d{2}(?::\d{2})?)\]/g, (_, t) => `<button class="ts" data-seek="${parseTs(t)}"><i data-lucide="play"></i>${t}</button>`);
+    return `<div class="msg ${m.role === 'user' ? 'user' : 'bot'}">${body}</div>`;
+  }).join('');
+  const sugg = ['What should I try first?', 'What are the prerequisites?', 'Explain the hardest part simply'];
+  $('ask-suggest').innerHTML = msgs.length ? '' : sugg.map((s) => `<button class="chip" data-action="ask-suggest">${esc(s)}</button>`).join('');
+  icons();
+}
+async function ask(q) {
+  const v = state.current; q = q.trim(); if (!v || !q || state.busy) return;
+  const hist = state.chats[v.id] ||= [];
+  hist.push({ role: 'user', text: q }); renderAsk();
+  state.busy = true;
+  hist.push({ role: 'bot', text: 'Thinking…' }); renderAsk();
+  let answer;
+  if (state.apiKey) {
+    try {
+      const context = JSON.stringify({ title: v.title, channel: v.channel, coreThesis: v.coreThesis, summary: v.summary, insights: v.insights.map((i) => `[${i.timestamp}] ${i.title}: ${i.body}`), playbook: v.playbook.map((p) => `${p.when ? 'When ' + p.when + ': ' : ''}${p.do}`), links: v.links.map((l) => `${l.title} ${l.url}`), caveats: v.caveats.map((c) => c.text) });
+      const transcript = v.transcript.map((t) => `[${t.timestamp}] ${t.text}`).join('\n').slice(0, 120000);
+      const system = `You answer questions about one YouTube video for ${LENSES[v.lens]}. Use the transcript and analysis below. Cite moments as [MM:SS]. If the video doesn't cover something, say so, then answer briefly from general knowledge and label it as such. Be concise; plain text, no markdown headings.\n\nAnalysis: ${context}${transcript ? `\n\nTranscript:\n${transcript}` : ''}`;
+      const contents = hist.slice(0, -2).slice(-10).map((m) => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] }));
+      contents.push({ role: 'user', parts: [{ text: q }] });
+      const body = { systemInstruction: { parts: [{ text: system }] }, contents, generationConfig: { temperature: 0.3 } };
+      if (!v.transcript.length) body.contents[0].parts.unshift({ file_data: { file_uri: v.url } });
+      answer = (await gemini(body)).text.trim() || 'Gemini returned an empty answer. Try rephrasing.';
+    } catch (e) { answer = `${e.message}\n\nFrom the analysis instead:\n${offlineAnswer(v, q)}`; }
+  } else answer = offlineAnswer(v, q) + '\n\n(Add a Gemini key for real answers.)';
+  hist[hist.length - 1] = { role: 'bot', text: answer };
+  state.busy = false; persist('chats'); renderAsk();
+}
+function offlineAnswer(v, q) {
+  const words = q.toLowerCase().split(/\W+/).filter((w) => w.length > 3);
+  const pool = [...v.insights.map((i) => ({ t: `${i.timestamp ? `[${i.timestamp}] ` : ''}${i.title}: ${i.body}` })), ...v.playbook.map((p) => ({ t: p.do })), ...v.transcript.map((t) => ({ t: `[${t.timestamp}] ${t.text}` }))];
+  const hits = pool.map((p) => ({ ...p, n: words.filter((w) => p.t.toLowerCase().includes(w)).length })).filter((p) => p.n).sort((a, b) => b.n - a.n).slice(0, 3);
+  return hits.length ? hits.map((h) => h.t).join('\n\n') : `Nothing in the analysis matches that. The core idea: ${v.coreThesis}`;
+}
+
+function renderTranscript(query) {
+  const v = state.current, q = query.trim().toLowerCase();
+  if (!v.transcript.length) { $('t-body').innerHTML = '<div class="empty"><strong>No transcript attached</strong>Re-analyze with a transcript to search it here and get exact timestamps.</div>'; $('t-search').hidden = true; return; }
+  $('t-search').hidden = false;
+  const rows = q ? v.transcript.filter((t) => t.text.toLowerCase().includes(q)) : v.transcript;
+  const mark = (t) => (q ? esc(t).replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), (m) => `<mark>${m}</mark>`) : esc(t));
+  $('t-body').innerHTML = rows.slice(0, 2000).map((t) => `<div class="tline">${tsBtn(t)}<span>${mark(t.text)}</span></div>`).join('') || '<p class="sec-note">No matches.</p>';
+  icons();
+}
+
+function renderNotes() {
+  const v = state.current, notes = (state.notes[v.id] || []).slice().sort((a, b) => a.seconds - b.seconds);
+  $('notes-count').textContent = notes.length ? `(${notes.length})` : '';
+  $('notes-list').innerHTML = notes.map((n) => `<div class="note">${tsBtn(n)}<p>${esc(n.text)}</p><button class="x" data-action="del-note" data-id="${esc(n.id)}" aria-label="Delete note"><i data-lucide="x"></i></button></div>`).join('') || '';
+  icons();
+}
+function renderChapters() {
+  const v = state.current;
+  $('chapters-list').innerHTML = v.chapters.map((c) => `<button class="chapter" data-seek="${c.seconds ?? 0}"><span class="ts">${esc(c.timestamp || '00:00')}</span><span><span class="ct" style="font-weight:600">${esc(c.title)}</span>${c.summary ? `<br><span style="color:var(--muted)">${esc(c.summary)}</span>` : ''}</span></button>`).join('') || '<p class="sec-note" style="font-size:13px">No chapters.</p>';
+}
+
+/* ============================== Library & search ============================== */
+function searchHit(v, q) {
+  if (!q) return { ok: true };
+  const has = (s) => String(s || '').toLowerCase().includes(q);
+  if (has(v.title) || has(v.channel) || has(v.topic)) return { ok: true };
+  const i = v.insights.find((x) => has(x.title) || has(x.body)); if (i) return { ok: true, why: `Insight: ${i.title}` };
+  const l = v.links.find((x) => has(x.title) || has(x.url)); if (l) return { ok: true, why: `Link: ${l.title || l.url}` };
+  const c = v.code.find((x) => has(x.snippet) || has(x.label)); if (c) return { ok: true, why: `Code: ${c.label || c.snippet.slice(0, 40)}` };
+  const p = v.playbook.find((x) => has(x.do)); if (p) return { ok: true, why: `Playbook: ${p.do}` };
+  const t = v.transcript.find((x) => has(x.text)); if (t) return { ok: true, why: `${t.timestamp} "${t.text.slice(0, 60)}"` };
+  const n = (state.notes[v.id] || []).find((x) => has(x.text)); if (n) return { ok: true, why: `Note: ${n.text.slice(0, 50)}` };
+  return { ok: false };
+}
+function renderLibrary() {
+  const q = $('lib-search').value.trim().toLowerCase();
+  const items = state.library.map((v) => ({ v, hit: searchHit(v, q) })).filter((x) => x.hit.ok);
+  $('lib-label').textContent = q ? `${items.length} of ${state.library.length} match` : `Library (${state.library.length})`;
+  $('lib-list').innerHTML = items.map(({ v, hit }) => `<div class="libitem ${state.view === 'video' && state.current?.id === v.id ? 'active' : ''}">
+      ${state.compareMode ? `<input type="checkbox" data-action="compare-pick" data-vid="${esc(v.id)}" ${state.compareSel.has(v.id) ? 'checked' : ''} aria-label="Select ${esc(v.title)} to compare" />` : ''}
+      <button data-action="open-video" data-vid="${esc(v.id)}"><div class="t">${esc(v.title)}</div><div class="s">${esc(hit.why || [v.topic, v.channel].filter(Boolean).join(', '))}</div></button>
+    </div>`).join('') || `<p class="sec-note" style="padding:8px 10px">${q ? 'Nothing matches.' : 'No videos yet.'}</p>`;
+  $('compare-bar').hidden = !state.compareMode;
+  $('btn-compare').textContent = state.compareMode ? 'Done' : 'Compare';
+  $('btn-run-compare').disabled = state.compareSel.size < 2;
+  $('btn-run-compare').textContent = `Compare ${state.compareSel.size || ''} selected`.replace('  ', ' ');
+}
+
+async function runCompare() {
+  const sel = state.library.filter((v) => state.compareSel.has(v.id));
+  if (sel.length < 2) return;
+  const body = $('compare-body'); $('dlg-compare').showModal();
+  body.innerHTML = `<div class="status"><span class="spin"></span>Comparing ${sel.length} videos…</div>`;
+  const brief = sel.map((v) => ({ id: v.id, title: v.title, thesis: v.coreThesis, insights: v.insights.map((i) => `${i.title}: ${i.body}`), playbook: v.playbook.map((p) => p.do) }));
+  let r = null;
+  if (state.apiKey) {
+    try {
+      const out = await gemini({ contents: [{ role: 'user', parts: [{ text: `Compare these video analyses for someone learning the topic. Return only JSON: {"agree":["points the videos share"],"disagree":[{"point":"","positions":[{"title":"video title","view":""}]}],"unique":[{"title":"video title","points":[""]}],"plan":["combined ordered actions"]}\n\n${JSON.stringify(brief)}` }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0.3 } });
+      r = parseJsonLoose(out.text);
+    } catch (e) { toast(e.message); }
+  }
+  const li = (xs) => `<ul class="plain">${arr(xs).map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
+  if (r) {
+    body.innerHTML = `<h3 style="margin:0">Where they agree</h3>${li(r.agree)}
+      ${arr(r.disagree).length ? `<h3 style="margin:8px 0 0">Where they differ</h3>${arr(r.disagree).map((d) => `<div><strong>${esc(d.point)}</strong>${li(arr(d.positions).map((p) => `${p.title}: ${p.view}`))}</div>`).join('')}` : ''}
+      <h3 style="margin:8px 0 0">Only in one video</h3>${arr(r.unique).map((u) => `<div><strong>${esc(u.title)}</strong>${li(u.points)}</div>`).join('')}
+      <h3 style="margin:8px 0 0">Combined plan</h3>${li(r.plan)}`;
+  } else {
+    body.innerHTML = `<p class="sec-note">${state.apiKey ? 'The comparison failed, so here are the videos side by side.' : 'Add a Gemini key for a real comparison. For now, here are the videos side by side.'}</p>
+      ${sel.map((v) => `<div><strong>${esc(v.title)}</strong><p style="margin:4px 0 0">${esc(v.coreThesis)}</p></div>`).join('')}
+      <h3 style="margin:8px 0 0">All actions</h3>${li(sel.flatMap((v) => v.playbook.map((p) => p.do)))}`;
+  }
+}
+
+/* ============================== Export ============================== */
+function toMarkdown(v) {
+  const checks = state.checks[v.id] || {}, notes = (state.notes[v.id] || []).slice().sort((a, b) => a.seconds - b.seconds);
+  const at = (x) => (x.timestamp ? `[${x.timestamp}](${v.url}&t=${x.seconds}s) ` : '');
+  const L = [`# ${v.title}`, '', `${v.channel} — ${v.url}`, '', `> ${v.coreThesis}`, '', v.summary];
+  if (v.shifts.length) L.push('', '## What changes', ...v.shifts.map((s) => `- ~~${s.before}~~ → ${s.after}`));
+  if (v.insights.length) L.push('', '## Key insights', ...v.insights.map((i) => `- ${at(i)}**${i.title}** ${i.body}`));
+  if (v.playbook.length) L.push('', '## Playbook', ...v.playbook.map((p) => `- [${checks[p.id] ? 'x' : ' '}] ${p.when ? `*When ${p.when.replace(/^when\s+/i, '')}:* ` : ''}${p.do}`));
+  if (v.code.length) v.code.forEach((c, i) => { if (i === 0) L.push('', '## Code and commands'); L.push('', `${at(c)}${c.label}`, '```' + c.lang, c.snippet, '```'); });
+  if (v.links.length) L.push('', '## Links', ...v.links.map((l) => `- [${l.title || l.url}](${l.url}) (${ORIGIN_LABEL[l.origin]})`));
+  if (v.caveats.length) L.push('', "## What's changed since recording", ...v.caveats.map((c) => `- **${c.type}:** ${c.text}${c.sources.length ? ' ' + c.sources.map((s) => `[${s.title}](${s.url})`).join(' ') : ' (unverified)'}`));
+  if (v.furtherReading.length) L.push('', '## Read next', ...v.furtherReading.map((r) => `- ${r.sources[0] ? `[${r.title}](${r.sources[0].url})` : r.title}: ${r.why}`));
+  if (v.quotes.length) L.push('', '## Quotes', ...v.quotes.map((q) => `> ${q.text} ${q.timestamp ? `(${q.timestamp})` : ''}`));
+  if (notes.length) L.push('', '## My notes', ...notes.map((n) => `- ${at(n)}${n.text}`));
+  return L.join('\n');
+}
+function doExport(kind) {
+  const v = state.current; $('export-menu').open = false;
+  const slug = v.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 60) || v.id;
+  if (kind === 'copy-md') copyText(toMarkdown(v), 'Markdown copied');
+  else if (kind === 'md') download(`${slug}.md`, toMarkdown(v), 'text/markdown');
+  else if (kind === 'obsidian') {
+    const fm = ['---', `title: "${v.title.replace(/"/g, '\\"')}"`, `source: ${v.url}`, `channel: "${v.channel.replace(/"/g, '\\"')}"`, `tags: [youtube, ${(v.topic || 'notes').toLowerCase().replace(/[^a-z0-9]+/g, '-')}]`, `analyzed: ${new Date(v.analyzedAt || Date.now()).toISOString().slice(0, 10)}`, '---', ''].join('\n');
+    download(`${slug}.md`, fm + toMarkdown(v), 'text/markdown');
+  } else if (kind === 'anki') {
+    const q = (s) => `"${String(s).replace(/"/g, '""')}"`;
+    download(`${slug}-anki.csv`, ['#separator:comma', '#columns:Front,Back,Tags', ...v.flashcards.map((c) => [q(c.q), q(c.a + (c.timestamp ? ` (${v.url}&t=${c.seconds}s)` : '')), q('annotated ' + slug)].join(','))].join('\n'), 'text/csv');
+  } else if (kind === 'json') download(`${slug}.json`, JSON.stringify(v, null, 2), 'application/json');
+  else if (kind === 'print') { document.querySelectorAll('.panel').forEach((p) => (p.hidden = false)); setTimeout(() => { window.print(); setTab(state.tab); }, 50); }
+}
+
+/* ============================== Analyze flow ============================== */
+let pendingAutoRun = false;
+function openAnalyze(url = '', reuse = null) {
+  $('a-url').value = url; $('a-status').textContent = ''; $('a-status').className = 'status';
+  $('a-lens').value = reuse?.lens || 'engineer';
+  if (!reuse) { $('a-desc').value = ''; $('a-transcript').value = ''; $('a-file').value = ''; }
+  else $('a-transcript').value = reuse.transcript.map((t) => `[${t.timestamp}] ${t.text}`).join('\n');
+  $('dlg-analyze').showModal();
+  if (!url) $('a-url').focus();
+}
+async function submitAnalyze() {
+  if (state.busy) return;
+  const status = $('a-status'), btn = $('a-submit');
+  const setStatus = (m) => { status.className = 'status'; status.innerHTML = `<span class="spin"></span>${esc(m)}`; };
+  state.busy = true; btn.disabled = true;
+  try {
+    const v = await analyzeVideo({ url: $('a-url').value, lens: $('a-lens').value, description: $('a-desc').value.trim(), transcriptRaw: $('a-transcript').value.trim() }, setStatus);
+    const old = state.library.find((x) => x.id === v.id);
+    if (old && old.topic && !v.topic) v.topic = old.topic;
+    state.library = [v, ...state.library.filter((x) => x.id !== v.id)];
+    persist('library');
+    $('dlg-analyze').close();
+    state.tab = 'understand'; openVideo(v.id); updateDueBadge();
+    toast(`Done: ${v.insights.length} insights, ${v.links.length} links, ${v.flashcards.length} cards`);
+  } catch (e) {
+    status.className = 'status err'; status.textContent = e.message || 'Analysis failed.';
+  } finally { state.busy = false; btn.disabled = false; }
+}
+
+/* ============================== Settings ============================== */
+function updateKeyIndicator() {
+  $('key-dot').classList.toggle('on', !!state.apiKey);
+  $('key-label').textContent = state.apiKey ? state.model : 'Add Gemini key';
+}
+function fillModelSelect() {
+  const list = state.models || DEFAULT_MODELS;
+  const opts = list.includes(state.model) ? list : [state.model, ...list];
+  $('s-model').innerHTML = opts.map((m) => `<option value="${esc(m)}" ${m === state.model ? 'selected' : ''}>${esc(m)}</option>`).join('');
+}
+async function loadModels() {
+  const key = $('s-key').value.trim(); const st = $('s-status');
+  if (!key) { st.className = 'status err'; st.textContent = 'Enter a key first.'; return; }
+  st.className = 'status'; st.innerHTML = '<span class="spin"></span>Loading models…';
+  try {
+    const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': key } });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error?.message || `Error ${res.status}`);
+    const names = arr(data.models).filter((m) => arr(m.supportedGenerationMethods).includes('generateContent') && /^models\/gemini-/.test(m.name) && !/(tts|image|live|embedding|audio)/.test(m.name)).map((m) => m.name.replace('models/', ''));
+    if (!names.length) throw new Error('No text models found for this key.');
+    state.models = names.sort().reverse(); ls.set('td_models', JSON.stringify(state.models));
+    const keep = $('s-model').value; fillModelSelect(); if (names.includes(keep)) $('s-model').value = keep;
+    st.textContent = `${names.length} models available.`;
+  } catch (e) { st.className = 'status err'; st.textContent = `Couldn't load models: ${e.message}`; }
+}
+
+/* ============================== Command palette ============================== */
+function paletteItems(q) {
+  const cmds = [
+    { l: 'Analyze a video', h: 'Action', run: () => openAnalyze() },
+    { l: "Today's review", h: 'View', run: showToday },
+    { l: 'Understand', h: 'Tab', run: () => setTab('understand'), needs: true },
+    { l: 'Act', h: 'Tab', run: () => setTab('act'), needs: true },
+    { l: 'Retain', h: 'Tab', run: () => setTab('retain'), needs: true },
+    { l: 'Ask', h: 'Tab', run: () => setTab('ask'), needs: true },
+    { l: 'Transcript', h: 'Tab', run: () => setTab('transcript'), needs: true },
+    { l: 'Toggle dark mode', h: 'View', run: toggleTheme },
+    { l: 'Gemini settings', h: 'Settings', run: openSettings },
+    ...state.library.map((v) => ({ l: v.title, h: v.topic || 'Video', run: () => openVideo(v.id) })),
+  ].filter((c) => (!c.needs || state.view === 'video') && c.l.toLowerCase().includes(q.toLowerCase()));
+  return cmds.slice(0, 40);
+}
+let palSel = 0, palCmds = [];
+function renderPalette() {
+  palCmds = paletteItems($('pal-input').value); palSel = Math.min(palSel, Math.max(0, palCmds.length - 1));
+  $('pal-list').innerHTML = palCmds.map((c, i) => `<button class="${i === palSel ? 'sel' : ''}" data-action="pal-run" data-i="${i}"><span>${esc(c.l)}</span><small>${esc(c.h)}</small></button>`).join('') || '<p class="sec-note" style="padding:8px 12px">No matches.</p>';
+}
+function runPalette(i) { const c = palCmds[i]; $('dlg-palette').close(); if (c) c.run(); }
+
+/* ============================== Misc actions ============================== */
+function toggleTheme() { state.dark = !state.dark; document.documentElement.classList.toggle('dark', state.dark); ls.set('td_dark', String(state.dark)); }
+function openSettings() { $('s-key').value = state.apiKey; fillModelSelect(); $('s-status').textContent = ''; $('dlg-settings').showModal(); }
+function deleteVideo(btn) {
+  if (!btn.dataset.armed) { btn.dataset.armed = '1'; btn.querySelector('span').textContent = 'Click again to delete'; setTimeout(() => { if (btn.isConnected) { btn.dataset.armed = ''; btn.querySelector('span').textContent = 'Delete'; } }, 4000); return; }
+  const id = state.current.id;
+  state.library = state.library.filter((v) => v.id !== id);
+  ['notes', 'checks', 'stars', 'chats', 'quiz'].forEach((k) => { delete state[k][id]; persist(k); });
+  Object.keys(state.srs).forEach((k) => { if (k.startsWith(id + ':')) delete state.srs[k]; }); persist('srs');
+  persist('library'); state.compareSel.delete(id); updateDueBadge();
+  toast('Video deleted');
+  if (state.library[0]) openVideo(state.library[0].id); else { state.current = null; setView('empty'); renderLibrary(); }
+}
+function placeSide() {
+  // Under 1180px the player and notes move into the main column, above the content.
+  const narrow = window.matchMedia('(max-width: 1180px)').matches;
+  const content = $('side-content'), inline = $('side-inline'), side = $('side');
+  if (narrow && content.parentElement !== inline) { inline.appendChild(content); }
+  if (!narrow && content.parentElement !== side) { side.appendChild(content); }
+  inline.hidden = !narrow || state.view !== 'video';
+  if (!narrow) $('side-details').open = true;
+  else if (!placeSide.done) { $('side-details').open = false; placeSide.done = true; }
+}
+
+/* ============================== Events ============================== */
+document.addEventListener('click', (e) => {
+  const seekEl = e.target.closest('[data-seek]');
+  if (seekEl) { e.preventDefault(); seek(Number(seekEl.dataset.seek) || 0); return; }
+  const el = e.target.closest('[data-action]'); if (!el) {
+    if (!e.target.closest('details.menu')) $('export-menu').open = false;
+    return;
+  }
+  const a = el.dataset.action, v = state.current;
+  switch (a) {
+    case 'open-analyze': $('rail').classList.remove('open'); openAnalyze(); break;
+    case 'close-dialog': el.closest('dialog').close(); break;
+    case 'show-today': showToday(); break;
+    case 'open-video': openVideo(el.dataset.vid); break;
+    case 'open-rail': $('rail').classList.add('open'); break;
+    case 'open-settings': openSettings(); break;
+    case 'open-palette': openPalette(); break;
+    case 'toggle-theme': toggleTheme(); break;
+    case 'load-models': loadModels(); break;
+    case 'clear-key': state.apiKey = ''; ls.del('td_api_key'); updateKeyIndicator(); $('dlg-settings').close(); toast('Key removed'); break;
+    case 'toggle-compare': state.compareMode = !state.compareMode; if (!state.compareMode) state.compareSel.clear(); renderLibrary(); break;
+    case 'run-compare': runCompare(); break;
+    case 'export': doExport(el.dataset.kind); break;
+    case 'reanalyze': openAnalyze(v.url, v); break;
+    case 'delete-video': deleteVideo(el); break;
+    case 'insight-filter': state.insightFilter = el.dataset.k; renderUnderstand(); break;
+    case 'link-filter': state.linkFilter = el.dataset.k; renderAct(); break;
+    case 'star': { const s = state.stars[v.id] ||= {}; s[el.dataset.id] = !s[el.dataset.id]; if (!s[el.dataset.id]) delete s[el.dataset.id]; persist('stars'); renderUnderstand(); break; }
+    case 'copy-quote': copyText(el.dataset.text); break;
+    case 'copy-code': copyText(v.code[Number(el.dataset.i)].snippet, 'Command copied'); break;
+    case 'quiz': { (state.quiz[v.id] ||= {})[el.dataset.q] = Number(el.dataset.o); persist('quiz'); renderRetain(); break; }
+    case 'reset-quiz': delete state.quiz[v.id]; persist('quiz'); renderRetain(); break;
+    case 'reveal': state.session.revealed = true; renderReview(el.dataset.box); break;
+    case 'grade': gradeCard(Number(el.dataset.grade), el.dataset.box); if (state.view === 'video') { const due = dueQueue(v.id).length; const note = $('panel-retain').querySelector('.sec-note'); if (note) note.textContent = `${allCards(v.id).length} cards from this video, ${due} due now. They also appear in Today's review alongside your other videos.`; } break;
+    case 'practice': startPractice(el.dataset.vid); renderReview(el.closest('#today-review') ? 'today-review' : 'video-review'); break;
+    case 'ask-suggest': ask(el.textContent); break;
+    case 'del-note': state.notes[v.id] = (state.notes[v.id] || []).filter((n) => n.id !== el.dataset.id); persist('notes'); renderNotes(); break;
+    case 'pal-run': runPalette(Number(el.dataset.i)); break;
+  }
+});
+document.addEventListener('change', (e) => {
+  const el = e.target;
+  if (el.dataset.action === 'check') {
+    const c = state.checks[state.current.id] ||= {};
+    if (el.checked) c[el.dataset.id] = true; else delete c[el.dataset.id];
+    persist('checks'); renderAct();
+  } else if (el.dataset.action === 'compare-pick') {
+    if (el.checked) state.compareSel.add(el.dataset.vid); else state.compareSel.delete(el.dataset.vid);
+    renderLibrary();
+  }
+});
+document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openPalette(); return; }
+  const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName) || document.querySelector('dialog[open]');
+  if (typing || !state.session) return;
+  const boxId = state.view === 'today' ? 'today-review' : (state.view === 'video' && state.tab === 'retain' ? 'video-review' : null);
+  if (!boxId || !state.session.queue.length) return;
+  if (e.key === ' ' && !state.session.revealed) { e.preventDefault(); state.session.revealed = true; renderReview(boxId); }
+  else if (state.session.revealed && ['1', '2', '3', '4'].includes(e.key)) gradeCard([1, 3, 4, 5][Number(e.key) - 1], boxId);
+});
+
+function openPalette() { $('pal-input').value = ''; palSel = 0; renderPalette(); $('dlg-palette').showModal(); $('pal-input').focus(); }
+$('pal-input').addEventListener('input', () => { palSel = 0; renderPalette(); });
+$('pal-input').addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowDown') { e.preventDefault(); palSel = Math.min(palSel + 1, palCmds.length - 1); renderPalette(); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); palSel = Math.max(palSel - 1, 0); renderPalette(); }
+  else if (e.key === 'Enter') { e.preventDefault(); runPalette(palSel); }
+});
+
+document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => { setTab(b.dataset.tab); if (b.dataset.tab === 'retain') renderRetain(); }));
+$('lib-search').addEventListener('input', renderLibrary);
+$('t-search').addEventListener('input', (e) => renderTranscript(e.target.value));
+$('v-topic').addEventListener('change', (e) => { state.current.topic = e.target.value.trim(); persist('library'); renderLibrary(); });
+$('ask-form').addEventListener('submit', (e) => { e.preventDefault(); const q = $('ask-input').value; $('ask-input').value = ''; ask(q); });
+$('analyze-form').addEventListener('submit', (e) => { e.preventDefault(); submitAnalyze(); });
+$('a-file').addEventListener('change', (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader(); r.onload = () => { $('a-transcript').value = r.result; toast(`Loaded ${f.name}`); }; r.readAsText(f);
+});
+$('settings-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  state.apiKey = $('s-key').value.trim(); state.model = $('s-model').value || state.model;
+  ls.set('td_api_key', state.apiKey); ls.set('td_model', state.model);
+  updateKeyIndicator(); $('dlg-settings').close(); toast('Settings saved');
+  if (pendingAutoRun && state.apiKey) { pendingAutoRun = false; openAnalyze($('a-url').value); }
+});
+$('note-text').addEventListener('focus', () => {
+  if (state.playerTime != null && !$('note-time').dataset.manual) { $('note-time').value = fmtTs(state.playerTime); $('note-time-hint').textContent = 'From the player'; }
+  else if (state.playerTime == null) $('note-time-hint').textContent = 'Play the video to fill this in';
+});
+$('note-time').addEventListener('input', () => { $('note-time').dataset.manual = '1'; $('note-time-hint').textContent = ''; });
+$('note-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const text = $('note-text').value.trim(); if (!text || !state.current) return;
+  const sec = $('note-time').value.trim() ? parseTs($('note-time').value) : (state.playerTime ?? 0);
+  (state.notes[state.current.id] ||= []).push({ id: uid(), seconds: Math.floor(sec), timestamp: fmtTs(sec), text });
+  persist('notes'); renderNotes();
+  $('note-text').value = ''; $('note-time').value = ''; delete $('note-time').dataset.manual; $('note-time-hint').textContent = 'Filled from the player';
+});
+window.matchMedia('(max-width: 1180px)').addEventListener('change', placeSide);
+
+/* ============================== Init ============================== */
+async function migrateLegacy() {
+  // One-time import of the original prototype's localStorage data.
+  const parse = (k, fb) => { try { return JSON.parse(ls.get(k, fb)); } catch { return JSON.parse(fb); } };
+  const oldLib = parse('td_library', '[]');
+  if (!Array.isArray(oldLib) || !oldLib.length) return null;
+  const lib = oldLib.filter((v) => !['WGeaxGgg4oI', 'zjkBMFhNj_g'].includes(v.id)).map(normalizeVideo);
+  const oldNotes = parse('td_notes', '{}'), notes = {};
+  for (const [vid, text] of Object.entries(oldNotes || {})) if (typeof text === 'string' && text.trim()) notes[vid] = [{ id: uid(), seconds: 0, timestamp: '00:00', text: text.trim() }];
+  const stars = parse('td_bookmarks', '{}');
+  ['td_library', 'td_notes', 'td_bookmarks', 'td_learnings', 'td_clips', 'td_srs'].forEach(ls.del);
+  return { lib, notes, stars };
+}
+
+async function init() {
+  state.dark = ls.get('td_dark', null) === null ? window.matchMedia('(prefers-color-scheme: dark)').matches : ls.get('td_dark') === 'true';
+  document.documentElement.classList.toggle('dark', state.dark);
+  state.apiKey = ls.get('td_api_key', '');
+  state.model = ls.get('td_model', 'gemini-3.8-flash');
+  if (/^gemini-(1|2)\./.test(state.model) || state.model === 'gemini-4-carbon') { state.model = 'gemini-3.8-flash'; ls.set('td_model', state.model); }
+  try { state.models = JSON.parse(ls.get('td_models', 'null')); } catch {}
+  updateKeyIndicator();
+
+  await DB.open();
+  const [library, notes, checks, stars, srs, chats, quiz, reviewLog, seeded] = await Promise.all(
+    ['library', 'notes', 'checks', 'stars', 'srs', 'chats', 'quiz', 'reviewLog', 'seeded'].map((k) => DB.get(k, k === 'library' ? [] : k === 'seeded' ? false : {}))
+  );
+  Object.assign(state, { notes, checks, stars, srs, chats, quiz, reviewLog });
+  state.library = arr(library).map(normalizeVideo);
+  if (!seeded) {
+    const legacy = await migrateLegacy();
+    if (legacy) { state.library = [...legacy.lib, ...state.library]; Object.assign(state.notes, legacy.notes); Object.assign(state.stars, legacy.stars || {}); persist('notes'); persist('stars'); }
+    state.library.push(...SAMPLES.map(normalizeVideo).filter((s) => !state.library.some((v) => v.id === s.id)));
+    persist('library'); DB.set('seeded', true);
+  }
+
+  updateDueBadge(); icons();
+
+  // Hand-off from the extension or landing page: ?url=… or ?v=…
+  const params = new URLSearchParams(location.search);
+  const incoming = params.get('url') || params.get('v');
+  if (incoming) history.replaceState(null, '', location.pathname);
+  const incomingId = extractYoutubeId(incoming);
+  if (incomingId && state.library.some((v) => v.id === incomingId)) { openVideo(incomingId); placeSide(); return; }
+
+  const last = ls.get('td_last');
+  if (state.library.length) openVideo(state.library.some((v) => v.id === last) ? last : state.library[0].id);
+  else { setView('empty'); renderLibrary(); }
+  placeSide();
+
+  if (incomingId) {
+    const url = `https://www.youtube.com/watch?v=${incomingId}`;
+    if (state.apiKey) { openAnalyze(url); submitAnalyze(); }
+    else { openAnalyze(url); $('a-status').textContent = 'Add a Gemini key in settings to analyze this video, or paste its transcript below.'; pendingAutoRun = true; }
+  }
+}
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "annotated — study guides from video tutorials",
+  "version": "1.1.0",
+  "description": "Adds a "Study in annotated" button under YouTube videos.",
+  "permissions": ["activeTab"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Study this video in annotated"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
