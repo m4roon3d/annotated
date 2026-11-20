@@ -4,6 +4,10 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>annotated — study guides for technical videos</title>
+<link rel="icon" type="image/svg+xml" href="assets/logo/app-icon.svg" />
+<link rel="icon" type="image/png" sizes="192x192" href="assets/logo/app-icon-192.png" />
+<link rel="apple-touch-icon" href="assets/logo/app-icon-180.png" />
+<meta name="theme-color" content="#1B2430" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&family=Schibsted+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -62,8 +66,7 @@ a.btn { text-decoration: none; color: var(--ink); }
 /* Rail */
 .brand { display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 8px 0 18px; font-weight: 700; font-size: 17px; letter-spacing: -0.01em; white-space: nowrap; }
 .brand .btn-icon { margin-left: auto; }
-.brand-mark { width: 22px; height: 22px; border-radius: 5px; background: var(--ink); position: relative; }
-.brand-mark::after { content: ''; position: absolute; left: 4px; right: 4px; top: 9px; height: 5px; background: var(--hl); border-radius: 1px; }
+.brand-mark { width: 26px; height: 26px; flex-shrink: 0; color: var(--ink); }
 .rail-block { padding: 0 12px 12px; }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 14px; border-radius: var(--r-sm); font-weight: 600; font-size: 14px; border: 1px solid var(--rule); background: var(--surface); }
 .btn:hover { border-color: var(--faint); }
@@ -433,7 +436,7 @@ dialog[open]::backdrop { animation: fadeIn 0.2s ease-out; }
 <body>
 <div class="app">
   <aside class="rail" id="rail" aria-label="Library">
-    <div class="brand"><span class="brand-mark" aria-hidden="true"></span>annotated
+    <div class="brand"><svg class="brand-mark" viewBox="0 0 100 100" aria-hidden="true"><path d="M6 58 L94 51 L96 84 L8 90 Z" style="fill: var(--hl)"></path><circle cx="44" cy="60" r="21" fill="none" stroke="currentColor" stroke-width="13"></circle><rect x="58" y="32" width="13" height="56" rx="3" fill="currentColor"></rect></svg>annotated
       <button class="btn btn-quiet btn-icon" data-action="toggle-rail" aria-label="Hide library" title="Hide library ( [ )"><i data-lucide="panel-left-close"></i></button>
     </div>
     <div class="rail-block">

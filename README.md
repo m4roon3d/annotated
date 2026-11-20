@@ -11,6 +11,7 @@ Turns a YouTube tutorial into a study guide you keep. You get the core idea, wha
 | `extension/` | Chrome extension (Manifest V3) that adds a "Study in annotated" button under YouTube videos. |
 | `docs/HANDOVER.md` | Architecture, data schema, analysis pipeline and roadmap. |
 | `docs/saas_blueprint.md` | Commercial plan and pricing. |
+| `assets/logo/` | The logo: `mark.svg` (for light backgrounds), `mark-on-dark.svg`, `app-icon.svg`, and PNG app icons. |
 
 ## Live
 
