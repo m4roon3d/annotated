@@ -270,7 +270,7 @@ mark { background: var(--hl); color: var(--hl-ink); padding: 0 1px; }
 .side h2 { font-size: 15px; font-weight: 700; margin: 0 0 4px; }
 .note-form { display: grid; grid-template-columns: 72px 1fr; gap: 8px; margin: 10px 0 14px; }
 .note-form textarea { grid-column: 1 / -1; min-height: 64px; }
-.note-form .btn { grid-column: 1 / -1; }
+.note-form > .btn { grid-column: 1 / -1; }
 .note { padding: 10px 0; border-top: 1px solid var(--rule); font-size: 14px; display: flex; gap: 10px; align-items: flex-start; }
 .note p { margin: 0; flex: 1; white-space: pre-wrap; }
 .note .x { color: var(--faint); }
@@ -304,6 +304,14 @@ label.f small { font-weight: 400; color: var(--muted); }
 .qs { font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
 .qs.failed { color: var(--bad); }
 .qs.done { color: var(--ok); }
+.recap-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 22px; }
+.recap-bar audio { height: 38px; flex: 1; min-width: 220px; max-width: 460px; }
+.hf-btn { margin-left: auto; }
+.hf-btn.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.hf-status { margin-top: 10px; font-size: 13px; font-weight: 600; color: var(--link); min-height: 18px; }
+.mic.rec-on { color: var(--bad); border-color: var(--bad); animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--bad) 18%, transparent); } }
+.no-mic .mic { display: none !important; }
 .toast-act { color: var(--hl); font-weight: 700; padding: 4px 8px; border-radius: 6px; }
 .toast-act:hover { background: rgba(255,255,255,0.1); }
 .toast[hidden] { display: none; }
@@ -457,6 +465,7 @@ label.f small { font-weight: 400; color: var(--muted); }
         <form class="composer" id="ask-form">
           <label class="sr" for="ask-input">Your question</label>
           <input class="input" id="ask-input" placeholder="What did they say about…" autocomplete="off" />
+          <button class="btn btn-icon mic" type="button" data-action="dictate-ask" aria-pressed="false" aria-label="Ask by voice" title="Ask by voice"><i data-lucide="mic"></i></button>
           <button class="btn btn-primary" type="submit">Ask</button>
         </form>
       </section>
@@ -489,7 +498,7 @@ label.f small { font-weight: 400; color: var(--muted); }
           <span class="status" id="note-time-hint" style="font-size:13px">Filled from the player</span>
           <label class="sr" for="note-text">Note</label>
           <textarea class="input" id="note-text" placeholder="What clicked, what to try, what to check"></textarea>
-          <button class="btn btn-sm" type="submit">Add note</button>
+          <div style="grid-column:1/-1;display:flex;gap:6px"><button class="btn btn-sm mic" type="button" data-action="dictate-note" aria-pressed="false" title="Dictate a note"><i data-lucide="mic"></i>Dictate</button><button class="btn btn-sm" type="submit" style="flex:1">Add note</button></div>
         </form>
         <div id="notes-list"></div>
         <h2 style="margin-top:24px">Chapters</h2>
@@ -537,6 +546,15 @@ label.f small { font-weight: 400; color: var(--muted); }
         <select class="input" id="s-model"></select>
       </label>
       <button type="button" class="btn btn-sm" data-action="load-models" style="align-self:flex-start"><i data-lucide="refresh-cw"></i>Load models available to this key</button>
+      <label class="f">Voice for recaps and hands-free review
+        <select class="input" id="s-voice">
+          <option value="gemini">Gemini voice: natural, uses your key</option>
+          <option value="browser">Browser voice: free and instant</option>
+        </select>
+      </label>
+      <label class="f">Gemini voice
+        <select class="input" id="s-voice-name"></select>
+      </label>
       <div class="status" id="s-status" role="status"></div>
       <div class="dlg-foot">
         <button type="button" class="btn btn-quiet btn-danger" data-action="clear-key">Remove key</button>
@@ -704,6 +722,7 @@ const state = {
   apiKey: '', model: 'gemini-3.8-flash', models: null, dark: false,
   compareMode: false, compareSel: new Set(), insightFilter: 'all', linkFilter: 'all',
   playerTime: null, session: null, busy: false, queue: [], pendingKnown: null, combinedMd: '',
+  voice: 'browser', voiceName: 'Kore', handsFree: null, recap: null, spokenAsk: false,
 };
 const DEFAULT_MODELS = ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-pro-preview', 'gemini-4-argon'];
 const CONTENT_TYPES = ['Tutorial', 'Talk', 'Podcast', 'Interview', 'Explainer', 'Review', 'News', 'Short tip', 'Other'];
@@ -738,6 +757,7 @@ function normalizeVideo(raw) {
     contentType: CONTENT_TYPES.includes(v.contentType) ? v.contentType : '', isShort: !!v.isShort,
     durationSeconds: Number.isFinite(Number(v.durationSeconds)) && Number(v.durationSeconds) > 0 ? Math.round(Number(v.durationSeconds)) : null,
     speakers: arr(v.speakers).map((x) => str(x, 80)).filter(Boolean).slice(0, 8),
+    recapScript: str(v.recapScript, 6000),
     sourceLabel: str(v.sourceLabel, 120), analyzedAt: v.analyzedAt || null, sample: !!v.sample,
     model: str(v.model, 60), notesOnSource: arr(v.notesOnSource).map((n) => str(n, 300)).filter(Boolean),
     coreThesis: str(v.coreThesis, 800), summary: str(v.summary, 3000),
@@ -946,6 +966,18 @@ function snapToTranscript(items, transcript, textOf) {
 }
 
 /* ============================== Gemini ============================== */
+async function geminiRaw(body, model = state.model) {
+  if (!state.apiKey) throw new Error('Add a Gemini API key in settings first.');
+  let res;
+  try {
+    res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': state.apiKey }, body: JSON.stringify(body),
+    });
+  } catch { throw new Error("Couldn't reach Gemini. Check your connection."); }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { const e = new Error(data?.error?.message ? `Gemini: ${data.error.message}` : `Gemini returned an error (${res.status}).`); e.status = res.status; throw e; }
+  return data;
+}
 async function gemini(body, model = state.model) {
   if (!state.apiKey) throw new Error('Add a Gemini API key in settings first.');
   let res;
@@ -1230,7 +1262,9 @@ function renderReview(containerId) {
   }
   const c = lookup.get(s.queue[0]);
   box.innerHTML = `<div class="review">
-    <div class="meta"><span>${s.queue.length} left</span>${s.scope === 'all' ? `<button class="btn btn-quiet btn-sm" data-action="open-video" data-vid="${esc(c.video.id)}">${esc(c.video.title)}</button>` : ''}${tsBtn(c.card)}${c.rec ? '' : '<span class="origin">New</span>'}</div>
+    <div class="meta"><span>${s.queue.length} left</span>${s.scope === 'all' ? `<button class="btn btn-quiet btn-sm" data-action="open-video" data-vid="${esc(c.video.id)}">${esc(c.video.title)}</button>` : ''}${tsBtn(c.card)}${c.rec ? '' : '<span class="origin">New</span>'}
+      <button class="btn btn-sm hf-btn ${state.handsFree === containerId ? 'on' : ''}" data-action="hands-free" data-box="${containerId}" aria-pressed="${state.handsFree === containerId}" title="Read cards aloud and grade by voice"><i data-lucide="${state.handsFree === containerId ? 'square' : 'headphones'}"></i>${state.handsFree === containerId ? 'Stop hands-free' : 'Hands-free'}</button></div>
+    ${state.handsFree === containerId ? '<div class="hf-status" role="status" aria-live="polite"></div>' : ''}
     <div class="qtext">${esc(c.card.q)}</div>
     ${s.revealed ? `<div class="atext">${esc(c.card.a)}</div>
       <div class="grades">${[[1, 'Again'], [3, 'Hard'], [4, 'Good'], [5, 'Easy']].map(([g, l]) => `<button class="grade" data-action="grade" data-grade="${g}" data-box="${containerId}">${l}<small>${s.practice ? '&nbsp;' : intervalLabel(c.rec, g)}</small></button>`).join('')}</div>`
@@ -1250,12 +1284,285 @@ function gradeCard(grade, boxId) {
     if (grade < 3) s.queue.push(key); // see it again this session
   } else if (grade < 3) s.queue.push(key);
   s.revealed = false;
+  if (state.handsFree === boxId) stopSpeaking();
   renderReview(boxId); updateDueBadge(); if (state.current) updateTabCounts();
   if (state.view === 'today') renderTodayStats();
+  if (state.handsFree === boxId) { const run = ++hfRun; setTimeout(() => handsFreeStep(boxId, run), 250); }
+}
+
+/* ============================== Voice: speaking and listening ============================== */
+const VOICES = ['Kore', 'Puck', 'Charon', 'Aoede', 'Fenrir', 'Leda', 'Orus', 'Zephyr'];
+const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+const canListen = () => !!Recognition;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const useGeminiVoice = () => state.voice === 'gemini' && !!state.apiKey;
+let audioEl = null, speakToken = 0;
+const ttsCache = new Map();
+
+// Turn Markdown or study text into something pleasant to hear.
+function speakable(text) {
+  return String(text || '')
+    .replace(/```[\s\S]*?```/g, ' There is a code snippet on screen. ')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\[([^\]]+)\]\((https?:[^)]+)\)/g, '$1')
+    .replace(/https?:\/\/\S+/g, 'the link on screen')
+    .replace(/(?:\b(?:at|around)\s+)?\[(\d{1,2}):(\d{2})(?::(\d{2}))?\]/g, (_, a, b, c) => {
+      const n = (x, u) => `${Number(x)} ${u}${Number(x) === 1 ? '' : 's'}`;
+      return c ? ` at ${n(a, 'hour')} ${n(b, 'minute')} ` : ` at ${Number(a) ? n(a, 'minute') : ''} ${Number(b) ? n(b, 'second') : ''} `.replace(/\s+/g, ' ');
+    })
+    .replace(/^#{1,6}\s+/gm, '').replace(/\*\*|__|[*_>#]/g, '').replace(/^\s*[-•]\s+/gm, '').replace(/^\s*\d+[.)]\s+/gm, '')
+    .replace(/\s+/g, ' ').trim();
+}
+function pcmToWav(bytes, rate) {
+  const h = new ArrayBuffer(44), d = new DataView(h), w = (o, t) => [...t].forEach((c, i) => d.setUint8(o + i, c.charCodeAt(0)));
+  w(0, 'RIFF'); d.setUint32(4, 36 + bytes.length, true); w(8, 'WAVE'); w(12, 'fmt '); d.setUint32(16, 16, true); d.setUint16(20, 1, true); d.setUint16(22, 1, true);
+  d.setUint32(24, rate, true); d.setUint32(28, rate * 2, true); d.setUint16(32, 2, true); d.setUint16(34, 16, true); w(36, 'data'); d.setUint32(40, bytes.length, true);
+  return new Blob([h, bytes], { type: 'audio/wav' });
+}
+function audioBlobFrom(part) {
+  const bytes = Uint8Array.from(atob(part.data), (c) => c.charCodeAt(0)), mime = part.mimeType || '';
+  if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) return new Blob([bytes], { type: 'audio/wav' }); // already a WAV file
+  if (/mpeg|mp3|ogg|opus|aac/i.test(mime)) return new Blob([bytes], { type: mime.split(';')[0] });
+  return pcmToWav(bytes, Number((mime.match(/rate=(\d+)/) || [])[1]) || 24000); // raw 16-bit PCM
+}
+// Gemini text-to-speech. Tries the current request format, then the older one, then any TTS model the key can use.
+async function geminiTTS(text, style = '') {
+  const key = `${state.voiceName}|${style}|${hash(text)}`;
+  if (ttsCache.has(key)) return ttsCache.get(key);
+  const job = (async () => {
+    const body = (current) => ({
+      contents: [{ role: 'user', parts: [current && style ? { text, speechMetadata: { style } } : { text: style && !current ? `Say this in a ${style} way: ${text}` : text }] }],
+      generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: current ? { voice: state.voiceName } : { prebuiltVoiceConfig: { voiceName: state.voiceName } } } },
+    });
+    const models = [ls.get('td_tts_model') || 'gemini-3.8-flash-tts'];
+    let lastErr;
+    for (let mi = 0; mi < 3; mi++) {
+      const model = models[mi]; if (!model) break;
+      for (const current of [true, false]) {
+        try {
+          const data = await geminiRaw(body(current), model);
+          const part = arr(data.candidates?.[0]?.content?.parts).find((x) => x.inlineData?.data)?.inlineData;
+          if (!part) throw new Error('Gemini returned no audio.');
+          ls.set('td_tts_model', model);
+          return audioBlobFrom(part);
+        } catch (e) { lastErr = e; if (e.status === 404) break; }
+      }
+      if (mi === 0) { // the default model isn't available to this key: look for another TTS model
+        try {
+          const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': state.apiKey } });
+          const names = arr((await r.json()).models).map((m) => m.name.replace('models/', '')).filter((n) => /tts/.test(n) && n !== models[0]).sort().reverse();
+          models.push(...names.slice(0, 2));
+        } catch {}
+      }
+    }
+    throw lastErr || new Error('No Gemini voice model is available to this key.');
+  })();
+  ttsCache.set(key, job);
+  job.catch(() => ttsCache.delete(key));
+  return job;
+}
+function bestBrowserVoice() {
+  const vs = window.speechSynthesis ? speechSynthesis.getVoices() : [];
+  const lang = (navigator.language || 'en').slice(0, 2);
+  const pool = vs.filter((v) => v.lang && v.lang.startsWith(lang));
+  return pool.find((v) => /natural|neural|google|enhanced|premium/i.test(v.name)) || pool[0] || vs[0] || null;
+}
+function browserSpeak(text) {
+  return new Promise((resolve) => {
+    if (!window.speechSynthesis) return resolve();
+    const u = new SpeechSynthesisUtterance(text);
+    const v = bestBrowserVoice(); if (v) u.voice = v;
+    u.onend = u.onerror = () => resolve();
+    speechSynthesis.speak(u);
+  });
+}
+function playBlob(blob) {
+  return new Promise((resolve) => {
+    audioEl ||= new Audio();
+    if (audioEl.src) URL.revokeObjectURL(audioEl.src);
+    audioEl.src = URL.createObjectURL(blob);
+    audioEl.onended = audioEl.onerror = () => resolve();
+    audioEl.play().catch(() => resolve());
+  });
+}
+// Speak text with the chosen voice; resolves when finished or when stopSpeaking() is called.
+async function speak(text, style = '') {
+  const token = ++speakToken, t = speakable(text);
+  if (!t) return;
+  if (useGeminiVoice()) {
+    try { const blob = await geminiTTS(t, style); if (token === speakToken) await playBlob(blob); return; }
+    catch (e) { if (!speak.warned) { toast(`Gemini voice unavailable (${e.message}). Using the browser voice.`, 5000); speak.warned = true; } }
+  }
+  if (token === speakToken) await browserSpeak(t);
+}
+function stopSpeaking() {
+  speakToken++;
+  try { window.speechSynthesis && speechSynthesis.cancel(); } catch {}
+  if (audioEl) { audioEl.pause(); audioEl.onended?.(); }
+}
+function prefetchSpeech(text) { if (useGeminiVoice() && text) geminiTTS(speakable(text)).catch(() => {}); }
+
+// Listen for one short phrase. Resolves with what was heard ('' on silence or error).
+let activeRec = null;
+function listenOnce(timeoutMs = 7000) {
+  return new Promise((resolve) => {
+    if (!Recognition) return resolve('');
+    const r = new Recognition(); activeRec = r;
+    r.lang = navigator.language || 'en-US'; r.interimResults = false; r.maxAlternatives = 3; r.continuous = false;
+    let done = false;
+    const finish = (v) => { if (done) return; done = true; try { r.stop(); } catch {} if (activeRec === r) activeRec = null; resolve(v); };
+    r.onresult = (e) => finish([...e.results[0]].map((a) => a.transcript.toLowerCase()).join(' | '));
+    r.onerror = () => finish(''); r.onend = () => finish('');
+    setTimeout(() => finish(''), timeoutMs);
+    try { r.start(); } catch { finish(''); }
+  });
+}
+function gradeFromSpeech(heard) {
+  if (!heard) return null;
+  if (/\b(stop|pause|quit|exit)\b/.test(heard)) return 'stop';
+  if (/\b(repeat|say again|say that again|what)\b/.test(heard)) return 'repeat';
+  if (/\b(again|forgot|no idea|wrong|missed)\b/.test(heard)) return 1;
+  if (/\b(hard|difficult|tough)\b/.test(heard)) return 3;
+  if (/\b(easy|too easy|trivial)\b/.test(heard)) return 5;
+  if (/\b(good|got it|yes|right|correct|next|okay|ok)\b/.test(heard)) return 4;
+  return null;
+}
+
+/* ---------- Hands-free review ---------- */
+let hfRun = 0;
+const THINK_MS = 6000;
+function setHfStatus(boxId, text) { const el = $(boxId)?.querySelector('.hf-status'); if (el) el.textContent = text; }
+function startHandsFree(boxId) {
+  state.handsFree = boxId; hfRun++;
+  renderReview(boxId);
+  handsFreeStep(boxId, hfRun);
+}
+function stopHandsFree() {
+  if (!state.handsFree) return;
+  const box = state.handsFree; state.handsFree = null; hfRun++;
+  try { activeRec && activeRec.abort(); } catch {}
+  stopSpeaking();
+  if ($(box)) renderReview(box);
+}
+async function handsFreeStep(boxId, run) {
+  const alive = () => run === hfRun && state.handsFree === boxId;
+  const s = state.session;
+  const lookup = new Map(allCards().map((c) => [c.key, c]));
+  while (s && s.queue.length && !lookup.has(s.queue[0])) s.queue.shift();
+  if (!s || !s.queue.length) { await speak("That's everything due for now. Nice work."); if (alive()) stopHandsFree(); return; }
+  const c = lookup.get(s.queue[0]), next = lookup.get(s.queue[1]);
+  s.revealed = false; renderReview(boxId);
+  prefetchSpeech(c.card.a); if (next) prefetchSpeech(next.card.q);
+  setHfStatus(boxId, 'Reading the question…');
+  await speak(c.card.q); if (!alive()) return;
+  setHfStatus(boxId, 'Answer it in your head…');
+  await sleep(THINK_MS); if (!alive()) return;
+  s.revealed = true; renderReview(boxId);
+  setHfStatus(boxId, 'Reading the answer…');
+  await speak(c.card.a); if (!alive()) return;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    if (!canListen()) { setHfStatus(boxId, 'Tap how well you knew it.'); return; } // gradeCard() continues the loop
+    setHfStatus(boxId, 'Listening: say again, hard, good or easy');
+    const g = gradeFromSpeech(await listenOnce()); if (!alive()) return;
+    if (g === 'stop') { stopHandsFree(); return; }
+    if (g === 'repeat') { handsFreeStep(boxId, run); return; }
+    if (g) { gradeCard(g, boxId); return; }
+    if (attempt === 0) { setHfStatus(boxId, "Didn't catch that."); await speak('Say again, hard, good, or easy.'); if (!alive()) return; }
+  }
+  setHfStatus(boxId, "Didn't catch that. Tap how well you knew it.");
+}
+
+/* ---------- Spoken recap ---------- */
+function localRecapScript(v) {
+  const parts = [`This is a quick recap of ${v.title}${v.channel ? `, from ${v.channel}` : ''}.`];
+  if (v.coreThesis) parts.push(`The core idea: ${v.coreThesis}`);
+  v.insights.slice(0, v.isShort ? 1 : 3).forEach((i) => parts.push(`${i.title}. ${i.body}`));
+  if (v.playbook[0]) parts.push(`If you do one thing, ${v.playbook[0].do.replace(/^./, (c) => c.toLowerCase())}`);
+  return parts.join(' ');
+}
+async function recapScript(v) {
+  if (v.recapScript) return v.recapScript;
+  if (!state.apiKey) return localRecapScript(v);
+  const brief = { title: v.title, channel: v.channel, type: v.contentType, thesis: v.coreThesis, summary: v.summary, insights: v.insights.map((i) => `${i.title}: ${i.body}`), playbook: v.playbook.map((p) => p.do), caveats: v.caveats.map((c) => c.text) };
+  const words = v.isShort ? '60 to 90 words' : '250 to 350 words, about two minutes';
+  const r = await gemini({ contents: [{ role: 'user', parts: [{ text: `Write a spoken recap of this video for someone listening on a walk: ${words}. Conversational, second person, short sentences. No lists, headings, URLs, code or timestamps; if a command matters, describe it in plain words. Open with what the video is about in one sentence, then the core idea, then the most useful points, then what to try next. End with "If you remember one thing:" and the single most important takeaway. Plain text only.\n\n${JSON.stringify(brief)}` }] }], generationConfig: { temperature: 0.5 } });
+  v.recapScript = r.text.trim() || localRecapScript(v);
+  persist('library');
+  return v.recapScript;
+}
+function renderRecapBar() {
+  const v = state.current, box = $('recap-bar'); if (!v || !box) return;
+  const r = state.recap && state.recap.id === v.id ? state.recap : null;
+  let inner;
+  if (!r) inner = `<button class="btn btn-sm" data-action="recap-make"><i data-lucide="headphones"></i>Listen to a ${v.isShort ? 'short' : 'two-minute'} recap</button>`;
+  else if (r.status === 'working') inner = `<span class="status"><span class="spin"></span>${esc(r.msg)}</span>`;
+  else if (r.status === 'error') inner = `<span class="status err">${esc(r.msg)}</span><button class="btn btn-sm" data-action="recap-make">Try again</button>`;
+  else if (r.url) inner = `<audio controls src="${r.url}" id="recap-audio"></audio><a class="btn btn-sm btn-icon" href="${r.url}" download="${esc((v.title || 'recap').slice(0, 60))}.wav" title="Download recap" aria-label="Download recap"><i data-lucide="download"></i></a><button class="btn btn-sm btn-icon" data-action="recap-redo" title="Write a new recap" aria-label="Write a new recap"><i data-lucide="refresh-cw"></i></button>`;
+  else inner = `<button class="btn btn-sm" data-action="recap-browser">${r.playing ? '<i data-lucide="square"></i>Stop' : '<i data-lucide="play"></i>Play recap'}</button><span class="sec-note" style="margin:0;font-size:13px">Browser voice. Choose the Gemini voice in settings for a natural voice you can download.</span>`;
+  box.innerHTML = inner; icons();
+}
+async function makeRecap(fresh = false) {
+  const v = state.current; if (!v) return;
+  if (fresh) { v.recapScript = ''; await DB.set(`audio:${v.id}`, null); }
+  const id = v.id;
+  state.recap = { id, status: 'working', msg: 'Writing the recap…' }; renderRecapBar();
+  try {
+    const script = await recapScript(v);
+    if (!useGeminiVoice()) { state.recap = { id, status: 'ready', playing: false, script }; renderRecapBar(); toggleBrowserRecap(); return; }
+    const cached = !fresh && await DB.get(`audio:${id}`, null);
+    let blob = cached && cached.voice === state.voiceName && cached.script === script ? cached.blob : null;
+    if (!blob) {
+      state.recap = { id, status: 'working', msg: 'Recording the voice… about 20 seconds.' }; renderRecapBar();
+      blob = await geminiTTS(speakable(script), 'warm, clear and conversational, like a friend summarizing a video');
+      DB.set(`audio:${id}`, { voice: state.voiceName, script, blob });
+    }
+    if (state.current?.id !== id) return;
+    state.recap = { id, status: 'ready', url: URL.createObjectURL(blob), script };
+    renderRecapBar();
+    $('recap-audio')?.play().catch(() => {});
+  } catch (e) {
+    if (state.current?.id === id) { state.recap = { id, status: 'error', msg: e.message }; renderRecapBar(); }
+  }
+}
+async function toggleBrowserRecap() {
+  const r = state.recap; if (!r) return;
+  if (r.playing) { stopSpeaking(); r.playing = false; renderRecapBar(); return; }
+  r.playing = true; renderRecapBar();
+  await speak(r.script);
+  if (state.recap === r) { r.playing = false; renderRecapBar(); }
+}
+
+/* ---------- Voice input (dictation) ---------- */
+let dictation = null;
+function stopDictation() { if (dictation) { try { dictation.rec.stop(); } catch {} } }
+function toggleDictation(btn, field, { single = false, onDone } = {}) {
+  if (dictation) { const same = dictation.btn === btn; stopDictation(); if (same) return; }
+  if (!Recognition) { toast('Voice input needs Chrome, Edge or Safari.'); return; }
+  const r = new Recognition();
+  r.lang = navigator.language || 'en-US'; r.interimResults = true; r.continuous = !single;
+  const base = field.value ? field.value.replace(/\s*$/, ' ') : '';
+  let finalText = '';
+  dictation = { rec: r, btn };
+  btn.setAttribute('aria-pressed', 'true'); btn.classList.add('rec-on');
+  r.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) finalText += e.results[i][0].transcript; else interim += e.results[i][0].transcript;
+    }
+    field.value = (base + finalText + interim).replace(/\s+/g, ' ').trimStart();
+  };
+  r.onerror = (e) => { if (e.error === 'not-allowed') toast('Microphone access is blocked for this site.'); };
+  r.onend = () => {
+    btn.setAttribute('aria-pressed', 'false'); btn.classList.remove('rec-on');
+    if (dictation?.rec === r) dictation = null;
+    if (onDone && finalText.trim()) onDone();
+  };
+  try { r.start(); } catch { r.onend(); }
 }
 
 /* ============================== Views ============================== */
 function setView(view) {
+  stopHandsFree(); stopDictation(); stopSpeaking(); state.recap = null;
   state.view = view;
   $('today-view').hidden = view !== 'today';
   $('video-view').hidden = view !== 'video';
@@ -1312,6 +1619,7 @@ function updateTabCounts() {
   $('n-retain').title = due ? `${due} cards due` : '';
 }
 function setTab(tab) {
+  if (tab !== state.tab) { stopHandsFree(); stopDictation(); }
   state.tab = tab;
   document.querySelectorAll('.tab').forEach((b) => b.setAttribute('aria-selected', b.dataset.tab === tab));
   document.querySelectorAll('.panel').forEach((p) => (p.hidden = p.id !== `panel-${tab}`));
@@ -1321,7 +1629,7 @@ function renderUnderstand() {
   const v = state.current, stars = state.stars[v.id] || {};
   const cats = [...new Set(v.insights.map((i) => i.category))];
   const ins = v.insights.filter((i) => state.insightFilter === 'all' || (state.insightFilter === 'starred' ? stars[i.id] : i.category === state.insightFilter));
-  const html = [];
+  const html = [`<div class="recap-bar" id="recap-bar"></div>`];
   if (v.notesOnSource.length) html.push(`<div class="sec-note" style="border-left:3px solid var(--rule);padding-left:12px">${v.notesOnSource.map(esc).join('<br>')}</div>`);
   if (v.coreThesis) html.push(`<p class="thesis"><span class="hl">${esc(v.coreThesis)}</span></p>`);
   if (v.summary) html.push(`<div class="prose"><p>${esc(v.summary)}</p></div>`);
@@ -1346,7 +1654,8 @@ function renderUnderstand() {
     html.push(`<h2 class="sec">In their words</h2><p class="sec-note">${checked ? 'Each quote was found word for word in the transcript.' : 'Not checked against a transcript, so wording may differ slightly.'}</p>`);
     v.quotes.forEach((q) => html.push(`<blockquote class="q">${esc(q.text)}<div class="q-foot">${tsBtn(q)}<button class="btn btn-quiet btn-sm" data-action="copy-quote" data-text="${esc(`"${q.text}" — ${v.channel}${q.timestamp ? ` (${q.timestamp})` : ''}`)}"><i data-lucide="copy"></i>Copy</button></div></blockquote>`));
   }
-  $('panel-understand').innerHTML = html.join('') || '<div class="empty"><strong>No analysis yet</strong>Re-analyze this video to fill in this section.</div>';
+  $('panel-understand').innerHTML = html.join('');
+  renderRecapBar();
   icons();
 }
 
@@ -1507,6 +1816,7 @@ async function ask(q) {
   } else reply = { role: 'bot', mode: 'video', text: `${offlineAnswer(v, q)}\n\n_Add a Gemini key in settings for full answers${mode === 'web' ? ' and web search' : ''}._`, sources: [] };
   hist[hist.length - 1] = reply;
   state.busy = false; persist('chats'); renderAsk();
+  if (state.spokenAsk) { state.spokenAsk = false; speak(reply.text); } // answer aloud when the question was spoken
 }
 function offlineAnswer(v, q) {
   const words = q.toLowerCase().split(/\W+/).filter((w) => w.length > 3);
@@ -1806,7 +2116,12 @@ function runPalette(i) { const c = palCmds[i]; $('dlg-palette').close(); if (c) 
 
 /* ============================== Misc actions ============================== */
 function toggleTheme() { state.dark = !state.dark; document.documentElement.classList.toggle('dark', state.dark); ls.set('td_dark', String(state.dark)); }
-function openSettings() { $('s-key').value = state.apiKey; fillModelSelect(); $('s-status').textContent = ''; $('dlg-settings').showModal(); }
+function openSettings() {
+  $('s-key').value = state.apiKey; fillModelSelect(); $('s-status').textContent = '';
+  $('s-voice').value = state.voice;
+  $('s-voice-name').innerHTML = VOICES.map((n) => `<option ${n === state.voiceName ? 'selected' : ''}>${n}</option>`).join('');
+  $('dlg-settings').showModal();
+}
 function deleteVideo(id) {
   const idx = state.library.findIndex((v) => v.id === id); if (idx < 0) return;
   const video = state.library[idx], saved = {}, savedSrs = {};
@@ -1908,6 +2223,15 @@ document.addEventListener('click', (e) => {
     case 'grade': gradeCard(Number(el.dataset.grade), el.dataset.box); if (state.view === 'video') { const due = dueQueue(v.id).length; const note = $('panel-retain').querySelector('.sec-note'); if (note) note.textContent = `${allCards(v.id).length} cards from this video, ${due} due now. They also appear in Today's review alongside your other videos.`; } break;
     case 'practice': startPractice(el.dataset.vid); renderReview(el.closest('#today-review') ? 'today-review' : 'video-review'); break;
     case 'ask-suggest': ask(el.textContent); break;
+    case 'dictate-ask': toggleDictation(el, $('ask-input'), { single: true, onDone: () => { const q = $('ask-input').value; if (q.trim()) { $('ask-input').value = ''; state.spokenAsk = true; ask(q); } } }); break;
+    case 'dictate-note': {
+      if (!dictation && state.playerTime != null && !$('note-time').dataset.manual) $('note-time').value = fmtTs(state.playerTime);
+      toggleDictation(el, $('note-text')); break;
+    }
+    case 'hands-free': if (state.handsFree === el.dataset.box) stopHandsFree(); else { stopHandsFree(); startHandsFree(el.dataset.box); } break;
+    case 'recap-make': makeRecap(); break;
+    case 'recap-redo': makeRecap(true); break;
+    case 'recap-browser': toggleBrowserRecap(); break;
     case 'ask-mode': state.askMode = el.dataset.mode; ls.set('td_ask_mode', state.askMode); renderAsk(); $('ask-input').focus(); break;
     case 'copy-chat-code': copyText(el.dataset.code, 'Code copied'); break;
     case 'del-note': state.notes[v.id] = (state.notes[v.id] || []).filter((n) => n.id !== el.dataset.id); persist('notes'); renderNotes(); break;
@@ -1928,6 +2252,7 @@ document.addEventListener('change', (e) => {
 document.addEventListener('keydown', (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openPalette(); return; }
   if (e.key === 'Escape' && $('rail').classList.contains('open')) { toggleRail(false); return; }
+  if (e.key === 'Escape' && state.handsFree) { stopHandsFree(); return; }
   const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName) || document.querySelector('dialog[open]');
   if (!typing && !e.metaKey && !e.ctrlKey && !e.altKey) {
     if (e.key === '[') { e.preventDefault(); toggleRail(); return; }
@@ -1962,6 +2287,8 @@ $('settings-form').addEventListener('submit', (e) => {
   e.preventDefault();
   state.apiKey = $('s-key').value.trim(); state.model = $('s-model').value || state.model;
   ls.set('td_api_key', state.apiKey); ls.set('td_model', state.model);
+  state.voice = $('s-voice').value; state.voiceName = $('s-voice-name').value || state.voiceName;
+  ls.set('td_voice', state.voice); ls.set('td_voice_name', state.voiceName); state.recap = null; if (state.current) renderRecapBar();
   updateKeyIndicator(); $('dlg-settings').close(); toast('Settings saved');
   if (pendingAutoRun && state.apiKey) { pendingAutoRun = false; openAnalyze($('a-url').value, null, state.pendingKnown); submitAnalyze(); }
 });
@@ -1999,6 +2326,9 @@ async function init() {
   document.documentElement.classList.toggle('dark', state.dark);
   state.apiKey = ls.get('td_api_key', '');
   state.askMode = ls.get('td_ask_mode', 'web') === 'video' ? 'video' : 'web';
+  state.voice = ls.get('td_voice', null) || (state.apiKey ? 'gemini' : 'browser');
+  state.voiceName = VOICES.includes(ls.get('td_voice_name')) ? ls.get('td_voice_name') : 'Kore';
+  if (!canListen()) document.documentElement.classList.add('no-mic');
   state.model = ls.get('td_model', 'gemini-3.8-flash');
   if (/^gemini-(1|2)\./.test(state.model) || state.model === 'gemini-4-carbon') { state.model = 'gemini-3.8-flash'; ls.set('td_model', state.model); }
   try { state.models = JSON.parse(ls.get('td_models', 'null')); } catch {}
