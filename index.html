@@ -129,7 +129,10 @@ details.menu > summary::-webkit-details-marker { display: none; }
 .tab { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 12px; border-radius: 9px; font-size: 14px; font-weight: 500; color: var(--muted); white-space: nowrap; transition: background 0.15s, color 0.15s; }
 .tab svg.lucide { width: 15px; height: 15px; }
 .tab:hover { color: var(--ink); }
-.tab[aria-selected="true"] { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(15, 25, 40, 0.08), 0 0 0 1px var(--rule); }
+.tab[aria-selected="true"] { background: var(--ink); color: var(--paper); font-weight: 600; box-shadow: 0 1px 3px rgba(15, 25, 40, 0.18); }
+.tab[aria-selected="true"]:hover { color: var(--paper); }
+.tab[aria-selected="true"] .n { color: color-mix(in srgb, var(--paper) 70%, transparent); }
+.tab[aria-selected="true"] .n.due { color: var(--hl-ink); }
 .tab .n { font-size: 12px; font-weight: 500; color: var(--faint); font-variant-numeric: tabular-nums; }
 .tab .n:empty { display: none; }
 .tab .n.due { color: var(--hl-ink); background: var(--hl); padding: 0 6px; border-radius: 8px; font-weight: 600; }
