@@ -9,7 +9,8 @@ Turns a YouTube tutorial into a study guide organised around three jobs:
 - **Retain:** flashcards on a spaced-repetition schedule (SM-2), with one daily review queue across the whole library, plus a quiz.
 Also: Ask (chat grounded in the transcript), searchable transcript, timestamped notes, library search, multi-video compare, exports (Markdown, Obsidian, Anki CSV, JSON, print).
 
-Removed in v2: knowledge graph, clips and highlight reel, audio brief, lens callout.
+Removed in v2: knowledge graph, clips and highlight reel, audio brief, lens callout, and the reader personas (replaced by automatic content-type detection).
+Combine: select videos in the library, then **Combine** writes one Markdown cheat sheet (Gemini, or a local merge without a key).
 
 ## Files
 - `index.html`: the whole app. Plain HTML, CSS and JS (no Tailwind). Uses Lucide (pinned), plus Google Fonts (Literata, Schibsted Grotesk, JetBrains Mono).
@@ -22,6 +23,18 @@ Removed in v2: knowledge graph, clips and highlight reel, audio brief, lens call
 - **Right:** player, notes and chapters. Hide it with `]`; clicking any timestamp brings it back. Under 1180px it moves into the column above the title.
 - **Other shortcuts:** Ctrl/Cmd+K opens the command palette. In review, Space reveals the answer and 1–4 grade the card.
 - Panel state is remembered in `td_rail_off` and `td_side_off`.
+
+## Extension hand-off
+- The extension fetches YouTube's watch page (same origin) and reads `ytInitialPlayerResponse`: title, channel, full description, length and caption tracks. It then fetches the caption track as VTT; this is best effort, and YouTube sometimes returns nothing.
+- It opens the app with `#td=` + URI-encoded JSON `{ v: 1, items: [{ id, title, channel, description, lengthSeconds, isShort, transcript }] }`. The fragment never reaches a server.
+- One item opens the analyze dialog and starts straight away when a key is set. Several items go into the **Saved to analyze** list (IndexedDB `queue`) for one-click batch analysis.
+- On watch pages the buttons are **Study in annotated** and **Save**; on Shorts they sit in a floating bar. The popup can study or save the current video and send the whole saved list.
+- `?url=` still works for links from the landing page.
+
+## Content types
+There are no personas. The extraction pass sets `contentType` (Tutorial, Talk, Podcast, Interview, Explainer, Review, News, Short tip, Other), `topic` (used as the collection) and `speakers`, and shapes its output to match.
+- Videos of 3 minutes or less, or any `/shorts/` link, get a compact result.
+- Videos over 20 minutes without a transcript are read at `MEDIA_RESOLUTION_LOW`. If a video of unknown length turns out too long, the call is retried at low detail.
 
 ## Analysis pipeline (`analyzeVideo`)
 1. Metadata comes from YouTube oEmbed, with noembed as a fallback.

@@ -6,6 +6,6 @@ The product name is always lowercase: annotated.
 ## Ship
 target: github-pages
 merge: on-"Merge"
-checks: node -e "const h=require('fs').readFileSync('index.html','utf8');new Function(h.match(/<script>([\s\S]*)<\/script>/)[1])"
+checks: node -e "const h=require('fs').readFileSync('index.html','utf8');new Function(h.match(/<script>([\s\S]*)<\/script>/)[1])" && node -e "JSON.parse(require('fs').readFileSync('extension/manifest.json','utf8'))"
 release:
 preview: none (Pages deploys from main only)

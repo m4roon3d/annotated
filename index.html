@@ -26,6 +26,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; background: none; border: 0; padding: 0; }
 a { color: var(--link); text-decoration-thickness: 1px; text-underline-offset: 3px; }
 :focus-visible { outline: 2px solid var(--link); outline-offset: 2px; border-radius: 4px; }
+[hidden] { display: none !important; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 svg.lucide { width: 16px; height: 16px; stroke-width: 1.75; flex-shrink: 0; }
 
@@ -109,7 +110,7 @@ a.btn { text-decoration: none; color: var(--ink); }
 .vh-meta .by { color: var(--ink); font-weight: 500; }
 .tag-field { display: inline-flex; align-items: center; gap: 5px; color: var(--faint); }
 .tag-field svg.lucide { width: 14px; height: 14px; }
-.tag-input { border: 1px solid transparent; background: transparent; border-radius: var(--r-sm); padding: 3px 6px; width: 150px; field-sizing: content; min-width: 9ch; max-width: 220px; font-size: 13px; color: var(--muted); }
+.tag-input { border: 1px solid transparent; background: transparent; border-radius: var(--r-sm); padding: 3px 6px; width: 150px; field-sizing: content; min-width: 9ch; max-width: 220px; width: 140px; font-size: 13px; color: var(--muted); }
 .tag-input:hover { border-color: var(--rule); }
 .tag-input::placeholder { color: var(--faint); }
 .tag-input:focus { border-style: solid; color: var(--ink); }
@@ -239,6 +240,7 @@ details.how summary { cursor: pointer; }
 .msg.bot.md { white-space: normal; max-width: 100%; }
 .md p { margin: 0 0 10px; }
 .md p:last-child { margin-bottom: 0; }
+.md h3 { font-size: 19px; font-weight: 700; margin: 0 0 10px; letter-spacing: -0.01em; }
 .md h4 { font-size: 15px; font-weight: 700; margin: 16px 0 6px; }
 .md h4:first-child { margin-top: 0; }
 .md ul, .md ol { margin: 0 0 10px; padding-left: 22px; }
@@ -293,6 +295,12 @@ label.f small { font-weight: 400; color: var(--muted); }
 .palette-list small { color: var(--faint); }
 
 .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 14px; background: var(--ink); color: var(--paper); padding: 10px 12px 10px 16px; border-radius: 10px; font-size: 14px; z-index: 100; max-width: calc(100vw - 32px); box-shadow: 0 12px 32px -12px rgba(15, 25, 40, 0.5); }
+.qrow { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--rule); }
+.qrow:last-child { border-bottom: 1px solid var(--rule); }
+.qt { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qs { font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+.qs.failed { color: var(--bad); }
+.qs.done { color: var(--ok); }
 .toast-act { color: var(--hl); font-weight: 700; padding: 4px 8px; border-radius: 6px; }
 .toast-act:hover { background: rgba(255,255,255,0.1); }
 .toast[hidden] { display: none; }
@@ -351,6 +359,7 @@ label.f small { font-weight: 400; color: var(--muted); }
     </div>
     <div class="rail-block">
       <button class="navitem" id="nav-today" data-action="show-today"><i data-lucide="calendar-check"></i>Today's review<span class="count zero" id="due-count">0</span></button>
+      <button class="navitem" id="nav-queue" data-action="open-queue" hidden><i data-lucide="inbox"></i>Saved to analyze<span class="count" id="queue-count">0</span></button>
     </div>
     <div class="rail-block">
       <label class="sr" for="lib-search">Search your library</label>
@@ -362,7 +371,11 @@ label.f small { font-weight: 400; color: var(--muted); }
     </div>
     <div class="liblist" id="lib-list"></div>
     <div class="rail-block" id="compare-bar" hidden>
-      <button class="btn wide" id="btn-run-compare" data-action="run-compare" disabled>Compare selected</button>
+      <p class="sec-note" style="font-size:13px;margin:0 4px 8px">Tick two or more videos.</p>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-sm" style="flex:1" id="btn-run-compare" data-action="run-compare" disabled>Compare</button>
+        <button class="btn btn-sm btn-primary" style="flex:1" id="btn-run-combine" data-action="run-combine" disabled>Combine</button>
+      </div>
     </div>
     <div class="railfoot">
       <button class="btn btn-quiet btn-sm" data-action="open-settings" style="flex:1;justify-content:flex-start"><span class="dot" id="key-dot"></span><span id="key-label">Add Gemini key</span></button>
@@ -397,6 +410,7 @@ label.f small { font-weight: 400; color: var(--muted); }
       <div class="vh-meta">
         <span class="by" id="v-channel"></span>
         <label class="tag-field"><i data-lucide="tag"></i><span class="sr">Collection</span><input class="tag-input" id="v-topic" placeholder="Add to a collection" /></label>
+        <span id="v-kind"></span>
         <span id="v-source"></span>
       </div>
       <div class="vh-actions">
@@ -491,13 +505,7 @@ label.f small { font-weight: 400; color: var(--muted); }
       <label class="f">YouTube link
         <input class="input" id="a-url" required placeholder="https://www.youtube.com/watch?v=…" autocomplete="off" />
       </label>
-      <label class="f">Read it as
-        <select class="input" id="a-lens">
-          <option value="engineer">An engineer who'll build with this</option>
-          <option value="student">A student learning the topic</option>
-          <option value="lead">A tech lead or PM deciding what to adopt</option>
-        </select>
-      </label>
+      <p class="sec-note" id="a-handoff" hidden style="margin:0"></p>
       <label class="f">Video description <small>Optional. Paste it to catch every link the creator listed.</small>
         <textarea class="input" id="a-desc" rows="3"></textarea>
       </label>
@@ -539,8 +547,22 @@ label.f small { font-weight: 400; color: var(--muted); }
 
 <!-- Compare dialog -->
 <dialog id="dlg-compare" style="width:min(760px,calc(100vw - 32px))">
-  <div class="dlg-head"><h2>How these videos compare</h2><button type="button" class="btn btn-quiet btn-sm" data-action="close-dialog" aria-label="Close"><i data-lucide="x"></i></button></div>
+  <div class="dlg-head"><h2 id="compare-title">How these videos compare</h2><button type="button" class="btn btn-quiet btn-sm" data-action="close-dialog" aria-label="Close"><i data-lucide="x"></i></button></div>
   <div class="dlg-body" id="compare-body"></div>
+</dialog>
+
+<!-- Saved queue -->
+<dialog id="dlg-queue">
+  <div class="dlg-head"><h2>Saved to analyze</h2><button type="button" class="btn btn-quiet btn-sm" data-action="close-dialog" aria-label="Close"><i data-lucide="x"></i></button></div>
+  <div class="dlg-body">
+    <p class="sec-note" style="margin:0">Videos you saved from YouTube. They're analyzed one after another and added to your library.</p>
+    <div id="queue-list"></div>
+    <div class="status" id="q-status" role="status" aria-live="polite"></div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" data-action="close-dialog">Later</button>
+      <button type="button" class="btn btn-primary" id="q-run" data-action="run-queue">Analyze all</button>
+    </div>
+  </div>
 </dialog>
 
 <!-- Command palette -->
@@ -678,9 +700,11 @@ const state = {
   notes: {}, checks: {}, stars: {}, srs: {}, chats: {}, quiz: {}, reviewLog: {},
   apiKey: '', model: 'gemini-3.8-flash', models: null, dark: false,
   compareMode: false, compareSel: new Set(), insightFilter: 'all', linkFilter: 'all',
-  playerTime: null, session: null, busy: false,
+  playerTime: null, session: null, busy: false, queue: [], pendingKnown: null, combinedMd: '',
 };
 const DEFAULT_MODELS = ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-pro-preview', 'gemini-4-argon'];
+const CONTENT_TYPES = ['Tutorial', 'Talk', 'Podcast', 'Interview', 'Explainer', 'Review', 'News', 'Short tip', 'Other'];
+const audienceFor = (v) => `someone learning from this ${(v.contentType || 'video').toLowerCase()}`;
 const LENSES = { engineer: 'an engineer who will build with this', student: 'a student learning the topic', lead: 'a tech lead or PM deciding what to adopt' };
 
 /* ============================== Normalisation ============================== */
@@ -708,6 +732,9 @@ function normalizeVideo(raw) {
     id, url: `https://www.youtube.com/watch?v=${id}`,
     title: str(v.title, 300) || `YouTube video ${id}`, channel: str(v.channel, 120) || 'Unknown channel',
     topic: str(v.topic, 60), lens: LENSES[v.lens] ? v.lens : 'engineer',
+    contentType: CONTENT_TYPES.includes(v.contentType) ? v.contentType : '', isShort: !!v.isShort,
+    durationSeconds: Number.isFinite(Number(v.durationSeconds)) && Number(v.durationSeconds) > 0 ? Math.round(Number(v.durationSeconds)) : null,
+    speakers: arr(v.speakers).map((x) => str(x, 80)).filter(Boolean).slice(0, 8),
     sourceLabel: str(v.sourceLabel, 120), analyzedAt: v.analyzedAt || null, sample: !!v.sample,
     model: str(v.model, 60), notesOnSource: arr(v.notesOnSource).map((n) => str(n, 300)).filter(Boolean),
     coreThesis: str(v.coreThesis, 800), summary: str(v.summary, 3000),
@@ -940,6 +967,9 @@ function parseJsonLoose(text) {
 }
 
 const EXTRACT_SCHEMA = `{
+"contentType": "Tutorial|Talk|Podcast|Interview|Explainer|Review|News|Short tip|Other",
+"topic": "1-3 words naming the subject, for grouping videos",
+"speakers": ["names of people speaking, if known"],
 "coreThesis": "1-2 sentences: the central argument",
 "summary": "one paragraph",
 "shifts": [{"before": "belief or habit before watching", "after": "what to believe or do instead", "timestamp": "MM:SS"}],
@@ -955,24 +985,41 @@ const EXTRACT_SCHEMA = `{
 "researchTopics": ["things worth checking on today's web: tool versions, deprecations, pricing, official docs"]
 }`;
 
-async function extractPass({ id, url, meta, transcriptText, description, lens }) {
-  const prompt = `You are building a study guide from a YouTube video for ${LENSES[lens]}.
-Video: ${url}${meta.title ? `\nTitle: ${meta.title}` : ''}${meta.author_name ? `\nChannel: ${meta.author_name}` : ''}
+async function extractPass({ id, url, meta, transcriptText, description, isShort, duration }) {
+  const sizes = isShort
+    ? '- This is a short video, so keep it compact: 1-3 insights, 0-3 playbook items, 0-1 shifts, 0-1 quotes, 1-3 flashcards, 0-1 quiz questions, no chapters, and frameworks only if one is stated.'
+    : `- 4-8 insights, 3-8 playbook items, 2-4 shifts, 2-4 quotes, 6-10 flashcards, 4-6 quiz questions.${duration > 2700 ? ' This is a long video: use up to 12 insights and 12 flashcards, and chapters every 5-10 minutes.' : ''}`;
+  const prompt = `You are building a study guide from a YouTube video for a curious, busy learner.
+Video: ${url}${meta.title ? `\nTitle: ${meta.title}` : ''}${meta.author_name ? `\nChannel: ${meta.author_name}` : ''}${duration ? `\nLength: ${fmtTs(duration)}` : ''}
 ${description ? `\nCreator's description:\n${description.slice(0, 12000)}\n` : ''}${transcriptText ? `\nTranscript (timestamps in brackets):\n${transcriptText}\n` : ''}
+First decide what kind of video this is and set "contentType". Then shape everything for that kind:
+- Tutorial: concrete steps, exact commands, code and config, and gotchas.
+- Podcast or Interview: the main arguments and who made them (name the speaker), where they disagree, and every book, person, tool or company mentioned (add it to "links" when a URL is findable).
+- Talk or Explainer: the core ideas, mental models and the evidence given.
+- Review or News: the claims, the verdict, and what would change it.
+- Short tip: the one idea and how to apply it.
 Rules:
 - Only include what the video actually says or shows. Do not add outside knowledge here.
 - Timestamps are MM:SS or H:MM:SS and point to where the idea appears.
 - "code": copy commands, code and config exactly as shown or spoken. Empty array if none.
-- "links": every URL in the description plus any site, repo or tool the speaker names with a findable URL. Never invent URLs.
-- "quotes": exact words only, 2-4 of them.
-- 4-8 insights, 3-8 playbook items, 2-4 shifts, 6-10 flashcards, 4-6 quiz questions.
+- "links": every URL in the description plus anything the speaker names that has a findable URL. Never invent URLs.
+- "quotes": exact words only.
+${sizes}
 Return only JSON in this shape:
 ${EXTRACT_SCHEMA}`;
   const parts = [];
   if (!transcriptText) parts.push({ file_data: { file_uri: `https://www.youtube.com/watch?v=${id}` } });
   parts.push({ text: prompt });
   const body = { contents: [{ role: 'user', parts }], generationConfig: { responseMimeType: 'application/json', temperature: 0.2 } };
-  let r = await gemini(body);
+  // Long videos (podcasts, lectures) are read at low visual detail so they fit in Gemini's context.
+  if (!transcriptText && duration > 1200) body.generationConfig.mediaResolution = 'MEDIA_RESOLUTION_LOW';
+  let r;
+  try { r = await gemini(body); }
+  catch (e) {
+    if (transcriptText || body.generationConfig.mediaResolution || !/token|too long|exceed|context|limit/i.test(e.message)) throw e;
+    body.generationConfig.mediaResolution = 'MEDIA_RESOLUTION_LOW'; // video turned out too long: retry at low detail
+    r = await gemini(body);
+  }
   try { return parseJsonLoose(r.text); }
   catch {
     r = await gemini(body); // one retry; models occasionally truncate or wrap JSON
@@ -982,18 +1029,19 @@ ${EXTRACT_SCHEMA}`;
 
 // Pass 2: grounded web check. Free text (not JSON mode) so Gemini returns citation metadata.
 async function webPass(v, topics) {
-  const prompt = `Today is ${todayKey()}. Check this YouTube tutorial against the current web using Google Search.
+  const counts = v.isShort ? 'Give 1-2 CAVEAT lines, 1-3 READ lines, 0-2 PREREQ lines and 0-2 NEXT lines.' : 'Give 2-5 CAVEAT lines, 3-6 READ lines, 2-4 PREREQ lines and 2-4 NEXT lines.';
+  const prompt = `Today is ${todayKey()}. Check this YouTube ${(v.contentType || 'video').toLowerCase()} against the current web using Google Search. Look for claims that are out of date, disputed or need context, and for the best places to go deeper.
 Title: ${v.title}
 Channel: ${v.channel}
 Central claim: ${v.coreThesis}
 Topics to check: ${[...topics, ...v.links.slice(0, 8).map((l) => l.title)].filter(Boolean).join('; ')}
 
 Reply with ONLY lines in these formats, one item per line, nothing else:
-CAVEAT|Update or Deprecation or Cost or Correction|one or two sentences on what has changed or what to watch for, with dates where known
+CAVEAT|Update or Deprecation or Cost or Correction or Context|one or two sentences on what has changed, what is disputed or what to watch for, with dates where known
 READ|title of an official doc or high-quality page|why it's worth reading
 PREREQ|something to know before this video
 NEXT|what to learn after this video
-Give 2-5 CAVEAT lines, 3-6 READ lines, 2-4 PREREQ lines and 2-4 NEXT lines.`;
+${counts}`;
   const r = await gemini({ contents: [{ role: 'user', parts: [{ text: prompt }] }], tools: [{ google_search: {} }], generationConfig: { temperature: 0.2 } });
   const g = r.grounding || {};
   const chunks = arr(g.groundingChunks).map((c) => ({ title: str(c.web?.title, 120) || hostOf(c.web?.uri), url: safeUrl(c.web?.uri) }));
@@ -1027,11 +1075,13 @@ async function fetchMeta(id) {
   return {};
 }
 
-async function analyzeVideo({ url, lens, description, transcriptRaw }, onStatus) {
+async function analyzeVideo({ url, description = '', transcriptRaw = '', known = null }, onStatus) {
   const id = extractYoutubeId(url);
   if (!id) throw new Error("That doesn't look like a YouTube link.");
   onStatus('Looking up the video…');
-  const meta = await fetchMeta(id);
+  const meta = known?.title ? { title: known.title, author_name: known.channel } : await fetchMeta(id);
+  const duration = known?.lengthSeconds || null;
+  const isShort = (duration && duration <= 180) || !!known?.isShort || /\/shorts\//i.test(url);
   const transcript = transcriptRaw ? parseTranscriptText(transcriptRaw) : [];
   const notesOnSource = [];
   const LIMIT = 150000;
@@ -1042,12 +1092,12 @@ async function analyzeVideo({ url, lens, description, transcriptRaw }, onStatus)
   if (!state.apiKey) {
     if (!transcript.length && !description) throw new Error('Without a Gemini key, paste a transcript or description to analyze.');
     onStatus('Extracting without AI…');
-    return offlineAnalysis(id, meta, transcript, description, lens);
+    return { ...offlineAnalysis(id, meta, transcript, description), isShort, durationSeconds: duration };
   }
 
-  onStatus(transcript.length ? 'Reading the transcript…' : 'Watching the video… long videos can take a minute.');
-  const raw = await extractPass({ id, url, meta, transcriptText, description, lens });
-  let v = normalizeVideo({ ...raw, id, title: meta.title, channel: meta.author_name, lens, transcript, links: [], analyzedAt: Date.now(), model: state.model });
+  onStatus(transcript.length ? 'Reading the transcript…' : duration > 1200 ? 'Watching the video… long episodes can take a few minutes.' : 'Watching the video… this can take a minute.');
+  const raw = await extractPass({ id, url, meta, transcriptText, description, isShort, duration });
+  let v = normalizeVideo({ ...raw, id, title: meta.title, channel: meta.author_name, transcript, links: [], analyzedAt: Date.now(), model: state.model, isShort, durationSeconds: duration });
   const aiLinks = normalizeVideo({ id, links: raw.links }).links;
   v.links = mergeLinks(extractLinks(description, 'description'), aiLinks, extractLinks(transcript.map((t) => t.text).join('\n'), 'spoken'));
   v.quotes = verifyQuotes(v.quotes, transcript);
@@ -1066,7 +1116,7 @@ async function analyzeVideo({ url, lens, description, transcriptRaw }, onStatus)
   return v;
 }
 
-function offlineAnalysis(id, meta, transcript, description, lens) {
+function offlineAnalysis(id, meta, transcript, description) {
   const sentences = transcript.flatMap((t) => t.text.split(/(?<=[.!?])\s+/).map((s) => ({ s: s.trim(), t })) ).filter((x) => x.s.length > 40);
   const signal = /\b(key|important|because|therefore|principle|mistake|always|never|remember|crucial|the reason|trick)\b/i;
   const action = /\b(should|need to|must|make sure|avoid|don't|start by|use|try)\b/i;
@@ -1074,7 +1124,7 @@ function offlineAnalysis(id, meta, transcript, description, lens) {
   const top = [...scored].sort((a, b) => b.score - a.score).slice(0, 6).sort((a, b) => a.i - b.i);
   const step = Math.max(1, Math.ceil(transcript.length / 5));
   return normalizeVideo({
-    id, title: meta.title, channel: meta.author_name, lens, analyzedAt: Date.now(), sourceLabel: 'Basic extraction (no AI)',
+    id, title: meta.title, channel: meta.author_name, analyzedAt: Date.now(), sourceLabel: 'Basic extraction (no AI)',
     notesOnSource: ['Analyzed without Gemini: insights are sentences picked from the transcript, not a real summary. Add a key in settings for the full study guide.'],
     coreThesis: top[0]?.s || '', summary: top.slice(0, 3).map((x) => x.s).join(' ') || description.slice(0, 400),
     insights: top.map((x, n) => ({ id: 'o' + n, category: 'From transcript', title: x.s.split(/[,.;:]/)[0].slice(0, 80), body: x.s, seconds: x.t.seconds })),
@@ -1239,6 +1289,7 @@ function renderVideo() {
   $('v-channel').textContent = v.channel;
   $('v-topic').value = v.topic || '';
   $('v-open').href = v.url;
+  $('v-kind').innerHTML = [v.isShort ? 'Short' : v.contentType, v.durationSeconds ? fmtTs(v.durationSeconds) : ''].filter(Boolean).map((x) => `<span class="origin video">${esc(x)}</span>`).join(' ');
   $('v-source').innerHTML = v.sourceLabel ? `<span class="origin">${esc(v.sourceLabel)}</span>` : '';
   $('topbar-title').textContent = v.title;
   $('print-head').innerHTML = `<p>${esc(v.channel)} — ${esc(v.url)}</p>`;
@@ -1391,7 +1442,7 @@ function renderMarkdown(src) {
       continue;
     }
     if (!line.trim()) { flushPara(); if (list && list.type === 'ul') flushList(); continue; }
-    if ((m = line.match(/^#{1,6}\s+(.*)/))) { flushPara(); flushList(); out.push(`<h4>${inline(m[1].replace(/\*\*/g, ''))}</h4>`); continue; }
+    if ((m = line.match(/^(#{1,6})\s+(.*)/))) { flushPara(); flushList(); const tag = m[1].length === 1 ? 'h3' : 'h4'; out.push(`<${tag}>${inline(m[2].replace(/\*\*/g, ''))}</${tag}>`); continue; }
     if ((m = line.match(/^\s*[-*•]\s+(.*)/))) { flushPara(); if (!list || list.type !== 'ul') { flushList(); list = { type: 'ul', items: [] }; } list.items.push(m[1]); continue; }
     if ((m = line.match(/^\s*(\d+)[.)]\s+(.*)/))) { flushPara(); if (!list || list.type !== 'ol') { flushList(); list = { type: 'ol', items: [], start: Number(m[1]) }; } list.items.push(m[2]); continue; }
     if (list && /^\s{2,}\S/.test(raw)) { list.items[list.items.length - 1] += ' ' + line.trim(); continue; }
@@ -1435,8 +1486,8 @@ async function ask(q) {
       const transcript = v.transcript.map((t) => `[${t.timestamp}] ${t.text}`).join('\n').slice(0, 120000);
       const format = 'Format in Markdown: start with a direct answer in one or two sentences, then use "### " headings only if the answer has parts, numbered lists for steps, and fenced code blocks with a language tag for every command, config or code. Keep it tight. No preamble.';
       const system = mode === 'web'
-        ? `You help ${LENSES[v.lens]} who is learning from the YouTube video below. Give the most complete, correct and current answer you can. Use Google Search for official documentation, current versions and full step-by-step instructions: the video is context, not a limit. Cite moments from the video as [MM:SS]. Where current practice or versions differ from the video, say so plainly. Don't write URLs in the answer; sources are shown separately. Today is ${todayKey()}. ${format}`
-        : `You answer questions about one YouTube video for ${LENSES[v.lens]}, using only the video, its transcript and the analysis below. Cite moments as [MM:SS]. If the video doesn't cover something, say so in one sentence and suggest switching to "Video + web"; don't fill gaps from general knowledge. ${format}`;
+        ? `You help ${audienceFor(v)} on YouTube (the video is described below). Give the most complete, correct and current answer you can. Use Google Search for official documentation, current versions and full step-by-step instructions: the video is context, not a limit. Cite moments from the video as [MM:SS]. Where current practice or versions differ from the video, say so plainly. Don't write URLs in the answer; sources are shown separately. Today is ${todayKey()}. ${format}`
+        : `You answer questions about one YouTube video for ${audienceFor(v)}, using only the video, its transcript and the analysis below. Cite moments as [MM:SS]. If the video doesn't cover something, say so in one sentence and suggest switching to "Video + web"; don't fill gaps from general knowledge. ${format}`;
       const contents = hist.slice(0, -2).slice(-10).map((m) => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] }));
       contents.push({ role: 'user', parts: [{ text: q }] });
       const sysText = `${system}\n\nVideo analysis: ${context}${transcript ? `\n\nTranscript:\n${transcript}` : ''}`;
@@ -1501,19 +1552,19 @@ function renderLibrary() {
   $('lib-label').textContent = q ? `${items.length} of ${state.library.length} match` : `Library (${state.library.length})`;
   $('lib-list').innerHTML = items.map(({ v, hit }) => `<div class="libitem ${state.view === 'video' && state.current?.id === v.id ? 'active' : ''}">
       ${state.compareMode ? `<input type="checkbox" data-action="compare-pick" data-vid="${esc(v.id)}" ${state.compareSel.has(v.id) ? 'checked' : ''} aria-label="Select ${esc(v.title)} to compare" />` : ''}
-      <button class="lib-open" data-action="open-video" data-vid="${esc(v.id)}"><img class="thumb" src="https://i.ytimg.com/vi/${esc(v.id)}/mqdefault.jpg" alt="" loading="lazy" onerror="this.style.visibility='hidden'" /><span class="lib-text"><span class="t">${esc(v.title)}</span><span class="s">${esc(hit.why || [v.topic, v.channel].filter(Boolean).join(', '))}</span></span></button>
+      <button class="lib-open" data-action="open-video" data-vid="${esc(v.id)}"><img class="thumb" src="https://i.ytimg.com/vi/${esc(v.id)}/mqdefault.jpg" alt="" loading="lazy" onerror="this.style.visibility='hidden'" /><span class="lib-text"><span class="t">${esc(v.title)}</span><span class="s">${esc(hit.why || [v.isShort ? 'Short' : '', v.topic, v.channel].filter(Boolean).join(', '))}</span></span></button>
       ${state.compareMode ? '' : `<button class="lib-del" data-action="delete-video" data-vid="${esc(v.id)}" aria-label="Delete ${esc(v.title)}" title="Delete"><i data-lucide="trash-2"></i></button>`}
     </div>`).join('') || `<p class="sec-note" style="padding:8px 10px">${q ? 'Nothing matches.' : 'No videos yet.'}</p>`;
   $('compare-bar').hidden = !state.compareMode;
-  $('btn-compare').textContent = state.compareMode ? 'Done' : 'Compare';
-  $('btn-run-compare').disabled = state.compareSel.size < 2;
-  $('btn-run-compare').textContent = `Compare ${state.compareSel.size || ''} selected`.replace('  ', ' ');
+  $('btn-compare').textContent = state.compareMode ? 'Done' : 'Select';
+  $('btn-run-compare').disabled = $('btn-run-combine').disabled = state.compareSel.size < 2;
   icons();
 }
 
 async function runCompare() {
   const sel = state.library.filter((v) => state.compareSel.has(v.id));
   if (sel.length < 2) return;
+  $('compare-title').textContent = 'How these videos compare';
   const body = $('compare-body'); $('dlg-compare').showModal();
   body.innerHTML = `<div class="status"><span class="spin"></span>Comparing ${sel.length} videos…</div>`;
   const brief = sel.map((v) => ({ id: v.id, title: v.title, thesis: v.coreThesis, insights: v.insights.map((i) => `${i.title}: ${i.body}`), playbook: v.playbook.map((p) => p.do) }));
@@ -1570,11 +1621,14 @@ function doExport(kind) {
 
 /* ============================== Analyze flow ============================== */
 let pendingAutoRun = false;
-function openAnalyze(url = '', reuse = null) {
+function openAnalyze(url = '', reuse = null, handoff = null) {
   $('a-url').value = url; $('a-status').textContent = ''; $('a-status').className = 'status';
-  $('a-lens').value = reuse?.lens || 'engineer';
-  if (!reuse) { $('a-desc').value = ''; $('a-transcript').value = ''; $('a-file').value = ''; }
-  else $('a-transcript').value = reuse.transcript.map((t) => `[${t.timestamp}] ${t.text}`).join('\n');
+  state.pendingKnown = handoff || (reuse ? { id: reuse.id, title: reuse.title, channel: reuse.channel, lengthSeconds: reuse.durationSeconds, isShort: reuse.isShort } : null);
+  $('a-desc').value = handoff?.description || ''; $('a-file').value = '';
+  $('a-transcript').value = handoff?.transcript || (reuse ? reuse.transcript.map((t) => `[${t.timestamp}] ${t.text}`).join('\n') : '');
+  const got = handoff ? [handoff.description && 'description', handoff.transcript && 'transcript'].filter(Boolean) : [];
+  $('a-handoff').hidden = !handoff;
+  $('a-handoff').textContent = got.length ? `The extension brought in the ${got.join(' and ')}.` : "The extension couldn't read the description or transcript. Paste them below if you have them.";
   $('dlg-analyze').showModal();
   if (!url) $('a-url').focus();
 }
@@ -1584,17 +1638,115 @@ async function submitAnalyze() {
   const setStatus = (m) => { status.className = 'status'; status.innerHTML = `<span class="spin"></span>${esc(m)}`; };
   state.busy = true; btn.disabled = true;
   try {
-    const v = await analyzeVideo({ url: $('a-url').value, lens: $('a-lens').value, description: $('a-desc').value.trim(), transcriptRaw: $('a-transcript').value.trim() }, setStatus);
-    const old = state.library.find((x) => x.id === v.id);
-    if (old && old.topic && !v.topic) v.topic = old.topic;
-    state.library = [v, ...state.library.filter((x) => x.id !== v.id)];
-    persist('library');
+    const urlId = extractYoutubeId($('a-url').value);
+    const known = state.pendingKnown && extractYoutubeId(state.pendingKnown.id) === urlId ? state.pendingKnown : null;
+    const v = await analyzeVideo({ url: $('a-url').value, description: $('a-desc').value.trim(), transcriptRaw: $('a-transcript').value.trim(), known }, setStatus);
+    addToLibrary(v);
     $('dlg-analyze').close();
     state.tab = 'understand'; openVideo(v.id); updateDueBadge();
     toast(`Done: ${v.insights.length} insights, ${v.links.length} links, ${v.flashcards.length} cards`);
   } catch (e) {
     status.className = 'status err'; status.textContent = e.message || 'Analysis failed.';
   } finally { state.busy = false; btn.disabled = false; }
+}
+
+function addToLibrary(v) {
+  const old = state.library.find((x) => x.id === v.id);
+  if (old && old.topic) v.topic = old.topic; // keep a collection the user chose
+  state.library = [v, ...state.library.filter((x) => x.id !== v.id)];
+  persist('library');
+}
+
+/* ============================== Saved queue (from the extension) ============================== */
+function readHandoff() {
+  const m = location.hash.match(/^#td=([\s\S]+)$/);
+  if (!m) return null;
+  history.replaceState(null, '', location.pathname + location.search);
+  try {
+    const d = JSON.parse(decodeURIComponent(m[1]));
+    return arr(d.items).map((it) => ({
+      id: extractYoutubeId(it.id), title: str(it.title, 300), channel: str(it.channel, 120), description: str(it.description, 20000),
+      lengthSeconds: Number(it.lengthSeconds) > 0 ? Math.round(Number(it.lengthSeconds)) : null, isShort: !!it.isShort, transcript: str(it.transcript, 600000),
+    })).filter((x) => x.id);
+  } catch { toast("Couldn't read the videos sent by the extension."); return null; }
+}
+function queueAdd(items) {
+  for (const it of items) {
+    if (state.queue.some((q) => q.id === it.id)) continue;
+    state.queue.push({ ...it, status: state.library.some((v) => v.id === it.id) ? 'in-library' : 'pending', error: '' });
+  }
+  persist('queue'); updateQueueNav();
+}
+function updateQueueNav() {
+  const n = state.queue.filter((q) => q.status === 'pending' || q.status === 'failed').length;
+  $('nav-queue').hidden = n === 0; $('queue-count').textContent = n;
+}
+const Q_LABEL = { pending: 'Waiting', working: 'Analyzing…', done: 'Done', failed: 'Failed', 'in-library': 'Already in library' };
+function renderQueue() {
+  $('queue-list').innerHTML = state.queue.map((q, i) => `<div class="qrow">
+      <img class="thumb" src="https://i.ytimg.com/vi/${esc(q.id)}/mqdefault.jpg" alt="" loading="lazy" onerror="this.style.visibility='hidden'" />
+      <div style="flex:1;min-width:0"><div class="qt">${esc(q.title || q.id)}</div><div class="qs ${q.status}">${q.status === 'working' ? '<span class="spin"></span>' : ''}${esc(Q_LABEL[q.status])}${q.isShort ? ', Short' : q.lengthSeconds ? `, ${fmtTs(q.lengthSeconds)}` : ''}${q.error ? `: ${esc(q.error)}` : ''}</div></div>
+      ${q.status === 'done' || q.status === 'in-library' ? `<button class="btn btn-sm" data-action="queue-open" data-vid="${esc(q.id)}">Open</button>` : ''}
+      ${q.status !== 'working' ? `<button class="lib-del" style="opacity:1" data-action="queue-remove" data-i="${i}" aria-label="Remove from list"><i data-lucide="x"></i></button>` : ''}
+    </div>`).join('') || '<p class="sec-note">Nothing saved. Use the extension\'s Save button on YouTube, then come back here.</p>';
+  const todo = state.queue.filter((q) => q.status === 'pending' || q.status === 'failed').length;
+  $('q-run').disabled = state.busy || todo === 0;
+  $('q-run').textContent = todo ? `Analyze ${todo}` : 'Nothing to analyze';
+  icons();
+}
+function openQueue() { renderQueue(); if (!$('dlg-queue').open) $('dlg-queue').showModal(); }
+async function runQueue() {
+  if (state.busy) return;
+  if (!state.apiKey) { $('q-status').className = 'status err'; $('q-status').textContent = 'Add a Gemini key in settings first. Your saved list stays here.'; return; }
+  state.busy = true; let ok = 0, firstDone = null;
+  for (const q of state.queue) {
+    if (q.status !== 'pending' && q.status !== 'failed') continue;
+    q.status = 'working'; q.error = ''; renderQueue();
+    try {
+      const v = await analyzeVideo({ url: `https://www.youtube.com/watch?v=${q.id}`, description: q.description, transcriptRaw: q.transcript, known: q }, (m) => { $('q-status').className = 'status'; $('q-status').textContent = `${q.title || q.id}: ${m}`; });
+      addToLibrary(v); q.status = 'done'; ok++; firstDone ||= v.id; renderLibrary(); updateDueBadge();
+    } catch (e) { q.status = 'failed'; q.error = e.message; }
+    persist('queue'); renderQueue();
+  }
+  state.busy = false;
+  $('q-status').className = 'status'; $('q-status').textContent = ok ? `Analyzed ${ok}. They're in your library.` : '';
+  state.queue = state.queue.filter((q) => q.status !== 'done' && q.status !== 'in-library');
+  persist('queue'); updateQueueNav(); renderQueue();
+  if (firstDone && !state.current) openVideo(firstDone);
+}
+
+/* ============================== Combine into one note ============================== */
+function combineLocal(sel) {
+  const seen = new Set(), uniq = (k) => { const n = normText(k); if (seen.has(n)) return false; seen.add(n); return true; };
+  const L = [`# Notes from ${sel.length} videos`, '', '## Key ideas', ...sel.map((v) => `- **${v.title}**: ${v.coreThesis}`)];
+  const acts = sel.flatMap((v) => v.playbook.map((p) => p.do)).filter(uniq);
+  if (acts.length) L.push('', '## Do this', ...acts.map((a) => `- ${a}`));
+  const code = sel.flatMap((v) => v.code.map((c) => ({ ...c, from: v.title }))).filter((c) => uniq(c.snippet));
+  if (code.length) { L.push('', '## Commands and code'); code.forEach((c) => L.push('', `${c.label || 'Snippet'} (${c.from})`, '```' + c.lang, c.snippet, '```')); }
+  const links = []; const lk = new Set();
+  sel.forEach((v) => v.links.forEach((l) => { const k = urlKey(l.url); if (!lk.has(k)) { lk.add(k); links.push(l); } }));
+  if (links.length) L.push('', '## Links', ...links.map((l) => `- [${l.title || hostOf(l.url)}](${l.url})`));
+  L.push('', '## Sources', ...sel.map((v) => `- [${v.title}](${v.url})`));
+  return L.join('\n');
+}
+async function runCombine() {
+  const sel = state.library.filter((v) => state.compareSel.has(v.id));
+  if (sel.length < 2) return;
+  $('compare-title').textContent = 'Combined notes';
+  const body = $('compare-body'); $('dlg-compare').showModal();
+  body.innerHTML = `<div class="status"><span class="spin"></span>Combining ${sel.length} videos…</div>`;
+  let md = '';
+  if (state.apiKey) {
+    try {
+      const brief = sel.map((v) => ({ title: v.title, url: v.url, thesis: v.coreThesis, insights: v.insights.map((i) => `${i.title}: ${i.body}`), playbook: v.playbook.map((p) => (p.when ? `When ${p.when}: ` : '') + p.do), code: v.code.map((c) => ({ label: c.label, lang: c.lang, snippet: c.snippet })), links: v.links.map((l) => ({ title: l.title, url: l.url })) }));
+      const r = await gemini({ contents: [{ role: 'user', parts: [{ text: `Merge these video notes into one cheat sheet in Markdown. Start with "# " and a short title. Group by theme with "## " headings, merge duplicates, and keep every command, code snippet and link exactly as given (code in fenced blocks, links as [title](url)). After each point, name the source video in parentheses. End with "## Sources" listing the videos as links.\n\n${JSON.stringify(brief)}` }] }], generationConfig: { temperature: 0.3 } });
+      md = r.text.trim();
+    } catch (e) { toast(e.message); }
+  }
+  if (!md) md = combineLocal(sel);
+  state.combinedMd = md;
+  body.innerHTML = `<div class="dlg-foot" style="justify-content:flex-start"><button class="btn btn-sm" data-action="combined-copy"><i data-lucide="copy"></i>Copy Markdown</button><button class="btn btn-sm" data-action="combined-download"><i data-lucide="download"></i>Download .md</button></div><div class="md prose" style="font-family:var(--ui);font-size:15px">${renderMarkdown(md)}</div>`;
+  icons();
 }
 
 /* ============================== Settings ============================== */
@@ -1732,6 +1884,13 @@ document.addEventListener('click', (e) => {
     case 'clear-key': state.apiKey = ''; ls.del('td_api_key'); updateKeyIndicator(); $('dlg-settings').close(); toast('Key removed'); break;
     case 'toggle-compare': state.compareMode = !state.compareMode; if (!state.compareMode) state.compareSel.clear(); renderLibrary(); break;
     case 'run-compare': runCompare(); break;
+    case 'run-combine': runCombine(); break;
+    case 'combined-copy': copyText(state.combinedMd, 'Markdown copied'); break;
+    case 'combined-download': download('combined-notes.md', state.combinedMd, 'text/markdown'); break;
+    case 'open-queue': closeDrawer(); openQueue(); break;
+    case 'run-queue': runQueue(); break;
+    case 'queue-remove': state.queue.splice(Number(el.dataset.i), 1); persist('queue'); updateQueueNav(); renderQueue(); break;
+    case 'queue-open': $('dlg-queue').close(); openVideo(el.dataset.vid); break;
     case 'export': doExport(el.dataset.kind); break;
     case 'reanalyze': openAnalyze(v.url, v); break;
     case 'delete-video': deleteVideo(el.dataset.vid || v.id); break;
@@ -1801,7 +1960,7 @@ $('settings-form').addEventListener('submit', (e) => {
   state.apiKey = $('s-key').value.trim(); state.model = $('s-model').value || state.model;
   ls.set('td_api_key', state.apiKey); ls.set('td_model', state.model);
   updateKeyIndicator(); $('dlg-settings').close(); toast('Settings saved');
-  if (pendingAutoRun && state.apiKey) { pendingAutoRun = false; openAnalyze($('a-url').value); }
+  if (pendingAutoRun && state.apiKey) { pendingAutoRun = false; openAnalyze($('a-url').value, null, state.pendingKnown); submitAnalyze(); }
 });
 $('note-text').addEventListener('focus', () => {
   if (state.playerTime != null && !$('note-time').dataset.manual) { $('note-time').value = fmtTs(state.playerTime); $('note-time-hint').textContent = 'From the player'; }
@@ -1845,10 +2004,11 @@ async function init() {
   if (ls.get('td_side_off')) toggleSide(false);
 
   await DB.open();
-  const [library, notes, checks, stars, srs, chats, quiz, reviewLog, seeded] = await Promise.all(
-    ['library', 'notes', 'checks', 'stars', 'srs', 'chats', 'quiz', 'reviewLog', 'seeded'].map((k) => DB.get(k, k === 'library' ? [] : k === 'seeded' ? false : {}))
+  const [library, notes, checks, stars, srs, chats, quiz, reviewLog, seeded, queue] = await Promise.all(
+    ['library', 'notes', 'checks', 'stars', 'srs', 'chats', 'quiz', 'reviewLog', 'seeded', 'queue'].map((k) => DB.get(k, k === 'library' || k === 'queue' ? [] : k === 'seeded' ? false : {}))
   );
   Object.assign(state, { notes, checks, stars, srs, chats, quiz, reviewLog });
+  state.queue = arr(queue).map((q) => ({ ...q, status: q.status === 'working' ? 'pending' : q.status }));
   state.library = arr(library).map(normalizeVideo);
   if (!seeded) {
     const legacy = await migrateLegacy();
@@ -1859,24 +2019,31 @@ async function init() {
 
   updateDueBadge(); icons();
 
-  // Hand-off from the extension or landing page: ?url=… or ?v=…
+  updateQueueNav();
+  // Older hand-off from the extension or landing page: ?url=… or ?v=…
   const params = new URLSearchParams(location.search);
   const incoming = params.get('url') || params.get('v');
-  if (incoming) history.replaceState(null, '', location.pathname);
-  const incomingId = extractYoutubeId(incoming);
-  if (incomingId && state.library.some((v) => v.id === incomingId)) { openVideo(incomingId); placeSide(); return; }
+  if (incoming) history.replaceState(null, '', location.pathname + location.hash);
+  // Current hand-off from the extension: #td={items:[…]} carries the description and transcript it read on YouTube.
+  const handoff = readHandoff();
 
   const last = ls.get('td_last');
   if (state.library.length) openVideo(state.library.some((v) => v.id === last) ? last : state.library[0].id);
   else { setView('empty'); renderLibrary(); }
   placeSide();
-
-  if (incomingId) {
-    const url = `https://www.youtube.com/watch?v=${incomingId}`;
-    if (state.apiKey) { openAnalyze(url); submitAnalyze(); }
-    else { openAnalyze(url); $('a-status').textContent = 'Add a Gemini key in settings to analyze this video, or paste its transcript below.'; pendingAutoRun = true; }
-  }
+  handleIncoming(handoff, extractYoutubeId(incoming));
 }
+function handleIncoming(handoff, plainId = null) {
+  if (handoff && handoff.length > 1) { queueAdd(handoff); openQueue(); return; }
+  const single = handoff && handoff.length === 1 ? handoff[0] : null;
+  const id = single ? single.id : plainId;
+  if (!id) return;
+  if (state.library.some((v) => v.id === id)) { openVideo(id); return; }
+  openAnalyze(`https://www.youtube.com/watch?v=${id}`, null, single);
+  if (state.apiKey) submitAnalyze();
+  else { $('a-status').textContent = 'Add a Gemini key in settings to analyze this video.'; pendingAutoRun = true; }
+}
+window.addEventListener('hashchange', () => { const h = readHandoff(); if (h) handleIncoming(h); });
 init();
 </script>
 </body>
