@@ -55,6 +55,18 @@ Answers are Markdown, rendered by `renderMarkdown()`. It escapes everything firs
 
 The API key is sent in the `x-goog-api-key` header. The available model list is loaded from `GET /v1beta/models`.
 
+## Retain and library organisation
+- **Card kinds:** flashcards carry a `kind`: `fact` (tutorials), `idea` and `who` (podcasts and talks), or `apply` (a prompt to use the idea, whose answer is a suggestion). How many cards depends on content type: news gets at most 1, Shorts 1.
+- **Pruning:**
+  - "Don't show this card again" sets `srs[key].suspended`, with Undo; it can also be said aloud in hands-free mode.
+  - The Retain tab has an "Include in Today's review" switch (`retainOff[videoId]`, stored in IndexedDB) and a per-card keep list.
+  - New cards per day defaults to 10 (`td_new_per_day`).
+- **Collections:**
+  - Extraction is given the existing collection names and asked to reuse one.
+  - **Organize** (sparkles icon) re-sorts every video whose collection you didn't set yourself, with Undo.
+  - Editing or renaming a collection marks it as yours (`topicByUser`).
+  - The library can be grouped by collection, by type or by recent; collapsed groups are remembered in `td_collapsed`.
+
 ## Voice
 - **Spoken recap (Understand tab):** Gemini writes a script for listening, then text-to-speech records it.
   - Model `gemini-3.8-flash-tts` with `speechConfig.voiceConfig.voice`. The older `prebuiltVoiceConfig` format is the fallback, then any `*tts*` model the key lists.
