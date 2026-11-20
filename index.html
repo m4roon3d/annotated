@@ -837,6 +837,7 @@ function normalizeVideo(raw) {
     durationSeconds: Number.isFinite(Number(v.durationSeconds)) && Number(v.durationSeconds) > 0 ? Math.round(Number(v.durationSeconds)) : null,
     speakers: arr(v.speakers).map((x) => str(x, 80)).filter(Boolean).slice(0, 8),
     recapScript: str(v.recapScript, 6000), topicByUser: !!v.topicByUser,
+    questions: { video: arr(v.questions?.video).map((q) => str(q, 160)).filter(Boolean).slice(0, 4), web: arr(v.questions?.web).map((q) => str(q, 160)).filter(Boolean).slice(0, 4) },
     sourceLabel: str(v.sourceLabel, 120), analyzedAt: v.analyzedAt || null, sample: !!v.sample,
     model: str(v.model, 60), notesOnSource: arr(v.notesOnSource).map((n) => str(n, 300)).filter(Boolean),
     coreThesis: str(v.coreThesis, 800), summary: str(v.summary, 3000),
@@ -1097,7 +1098,8 @@ const EXTRACT_SCHEMA = `{
 "chapters": [{"timestamp": "MM:SS", "title": "", "summary": ""}],
 "flashcards": [{"kind": "fact|idea|who|apply", "q": "", "a": "", "timestamp": "MM:SS"}],
 "quiz": [{"q": "", "options": ["", "", "", ""], "answer": 0, "explain": ""}],
-"researchTopics": ["things worth checking on today's web: tool versions, deprecations, pricing, official docs"]
+"researchTopics": ["things worth checking on today's web: tool versions, deprecations, pricing, official docs"],
+"questions": {"video": ["3 short questions a learner would ask that THIS video answers, naming its specific tools, people or ideas"], "web": ["3 short questions that go beyond this video: current versions, alternatives, costs, how to apply it today"]}
 }`;
 
 async function extractPass({ id, url, meta, transcriptText, description, isShort, duration }) {
@@ -1741,6 +1743,7 @@ function updateTabCounts() {
 function setTab(tab) {
   if (tab !== state.tab) { stopHandsFree(); stopDictation(); }
   state.tab = tab;
+  if (tab === 'ask' && state.current && !(state.chats[state.current.id] || []).length) ensureQuestions(state.current);
   document.querySelectorAll('.tab').forEach((b) => b.setAttribute('aria-selected', b.dataset.tab === tab));
   document.querySelectorAll('.panel').forEach((p) => {
     const show = p.id === `panel-${tab}`;
@@ -1906,6 +1909,36 @@ const ASK_MODES = {
   web: { note: 'Answers start from the video and fill in current docs and full steps from the web. Sources are listed under each answer.', placeholder: 'How do I do this today, step by step?', label: 'Video + web',
     sugg: ['How do I set this up today, step by step?', "What's changed since this video was made?", 'What are the prerequisites?'] },
 };
+// Questions built from the video's own content, used until (or instead of) Gemini-written ones.
+function localQuestions(v, mode) {
+  const out = [];
+  const topic = v.topic || v.contentType?.toLowerCase() || 'this';
+  if (mode === 'video') {
+    if (v.insights[0]) out.push(`Explain "${v.insights[0].title}" in simple terms`);
+    if (v.code[0]) out.push(`Walk me through: ${v.code[0].label || 'the first command'}`);
+    else if (v.playbook[0]) out.push(`Why should I ${v.playbook[0].do.replace(/^./, (c) => c.toLowerCase()).replace(/\.$/, '')}?`);
+    if (v.insights[1]) out.push(`What did they say about ${v.insights[1].title.replace(/^./, (c) => c.toLowerCase())}?`);
+    if (out.length < 3) out.push('What should I try first?');
+  } else {
+    if (v.code[0]) out.push(`Is "${v.code[0].snippet.split('\n')[0].slice(0, 60)}" still the right way to do this today?`);
+    if (v.links[0]) out.push(`What's the best way to get started with ${v.links[0].title || hostOf(v.links[0].url)}?`);
+    out.push(`What's changed in ${topic} since this video was made?`);
+    if (out.length < 3) out.push(`What are good alternatives to the approach in this video?`);
+  }
+  return out.slice(0, 3);
+}
+async function ensureQuestions(v) {
+  if (v.questions.video.length || !state.apiKey || ensureQuestions.pending?.has(v.id)) return;
+  (ensureQuestions.pending ||= new Set()).add(v.id);
+  try {
+    const brief = { title: v.title, type: v.contentType, thesis: v.coreThesis, insights: v.insights.map((i) => i.title), code: v.code.map((c) => c.label), links: v.links.slice(0, 8).map((l) => l.title), caveats: v.caveats.map((c) => c.text) };
+    const r = await gemini({ contents: [{ role: 'user', parts: [{ text: `Write suggested questions for a learner chatting about this video. Return only JSON: {"video": [3 short questions this video answers, naming its specific tools, people or ideas], "web": [3 short questions that go beyond the video: current versions, alternatives, costs, applying it today]}. Keep each under 12 words.\n\n${JSON.stringify(brief)}` }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0.4 } });
+    const q = parseJsonLoose(r.text);
+    v.questions = normalizeVideo({ questions: q }).questions;
+    persist('library');
+    if (state.current?.id === v.id && state.tab === 'ask') renderAsk();
+  } catch { /* keep the local questions */ } finally { ensureQuestions.pending.delete(v.id); }
+}
 function renderAsk() {
   const v = state.current, msgs = state.chats[v.id] || [], mode = ASK_MODES[state.askMode] ? state.askMode : 'web';
   document.querySelectorAll('[data-action="ask-mode"]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.mode === mode));
@@ -1921,8 +1954,19 @@ function renderAsk() {
     const src = arr(m.sources).length ? `<div class="sources"><span class="origin web">Sources</span>${m.sources.map((s) => `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.title)}</a>`).join('')}</div>` : '';
     return `<div class="msg bot md${enter}">${meta}${renderMarkdown(m.text)}${src}</div>`;
   }).join('');
-  $('ask-suggest').innerHTML = msgs.length ? '' : ASK_MODES[mode].sugg.map((s) => `<button class="chip" data-action="ask-suggest">${esc(s)}</button>`).join('');
+  const lastMsg = [...msgs].reverse().find((m) => !m.thinking);
+  const lastBot = lastMsg && lastMsg.role !== 'user' ? lastMsg : null;
+  const chips = state.busy ? [] : msgs.length ? arr(lastBot?.followups) : (v.questions[mode].length ? v.questions[mode] : localQuestions(v, mode));
+  $('ask-suggest').innerHTML = chips.map((s) => `<button class="chip" data-action="ask-suggest">${esc(s)}</button>`).join('');
+  $('ask-suggest').classList.toggle('followups', msgs.length > 0);
+  if (!msgs.length && state.tab === 'ask') ensureQuestions(v); // only when Ask is actually open
   icons();
+}
+function splitFollowups(text) {
+  const m = text.match(/\n\s*(?:\*\*|_)?follow-?ups?:?(?:\*\*|_)?:?\s*(.+)\s*$/i);
+  if (!m) return { text, followups: [] };
+  const followups = m[1].split(/\s*\|\s*/).map((q) => q.replace(/^[-*\d.)\s]+/, '').trim()).filter((q) => q.length > 3).slice(0, 3).map((q) => q.slice(0, 160));
+  return { text: text.slice(0, m.index).trim(), followups };
 }
 async function ask(q) {
   const v = state.current; q = q.trim(); if (!v || !q || state.busy) return;
@@ -1937,10 +1981,11 @@ async function ask(q) {
     try {
       const context = JSON.stringify({ title: v.title, channel: v.channel, coreThesis: v.coreThesis, summary: v.summary, insights: v.insights.map((i) => `[${i.timestamp}] ${i.title}: ${i.body}`), playbook: v.playbook.map((p) => `${p.when ? 'When ' + p.when + ': ' : ''}${p.do}`), code: v.code.map((c) => `[${c.timestamp}] ${c.label}: ${c.snippet}`), links: v.links.map((l) => `${l.title} ${l.url}`), caveats: v.caveats.map((c) => c.text) });
       const transcript = v.transcript.map((t) => `[${t.timestamp}] ${t.text}`).join('\n').slice(0, 120000);
+      const followFmt = ' After the answer, add one final line starting with "Follow-ups:" and then 2 or 3 short questions the learner might ask next, separated by " | ".';
       const format = 'Format in Markdown: start with a direct answer in one or two sentences, then use "### " headings only if the answer has parts, numbered lists for steps, and fenced code blocks with a language tag for every command, config or code. Keep it tight. No preamble.';
       const system = mode === 'web'
-        ? `You help ${audienceFor(v)} on YouTube (the video is described below). Give the most complete, correct and current answer you can. Use Google Search for official documentation, current versions and full step-by-step instructions: the video is context, not a limit. Cite moments from the video as [MM:SS]. Where current practice or versions differ from the video, say so plainly. Don't write URLs in the answer; sources are shown separately. Today is ${todayKey()}. ${format}`
-        : `You answer questions about one YouTube video for ${audienceFor(v)}, using only the video, its transcript and the analysis below. Cite moments as [MM:SS]. If the video doesn't cover something, say so in one sentence and suggest switching to "Video + web"; don't fill gaps from general knowledge. ${format}`;
+        ? `You help ${audienceFor(v)} on YouTube (the video is described below). Give the most complete, correct and current answer you can. Use Google Search for official documentation, current versions and full step-by-step instructions: the video is context, not a limit. Cite moments from the video as [MM:SS]. Where current practice or versions differ from the video, say so plainly. Don't write URLs in the answer; sources are shown separately. Today is ${todayKey()}. ${format}${followFmt}`
+        : `You answer questions about one YouTube video for ${audienceFor(v)}, using only the video, its transcript and the analysis below. Cite moments as [MM:SS]. If the video doesn't cover something, say so in one sentence and suggest switching to "Video + web"; don't fill gaps from general knowledge. ${format}${followFmt}`;
       const contents = hist.slice(0, -2).slice(-10).map((m) => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] }));
       contents.push({ role: 'user', parts: [{ text: q }] });
       const sysText = `${system}\n\nVideo analysis: ${context}${transcript ? `\n\nTranscript:\n${transcript}` : ''}`;
@@ -1948,7 +1993,9 @@ async function ask(q) {
       if (mode === 'web') body.tools = [{ google_search: {} }];
       if (!v.transcript.length) body.contents[0].parts.unshift({ file_data: { file_uri: v.url } });
       const r = await gemini(body);
-      reply.text = r.text.trim() || 'Gemini returned an empty answer. Try rephrasing.';
+      const split = splitFollowups(r.text.trim());
+      reply.text = split.text || 'Gemini returned an empty answer. Try rephrasing.';
+      reply.followups = split.followups;
       const seen = new Set();
       reply.sources = arr(r.grounding?.groundingChunks).map((c) => ({ title: str(c.web?.title, 80) || hostOf(c.web?.uri), url: safeUrl(c.web?.uri) }))
         .filter((s) => s.url && !seen.has(s.title) && seen.add(s.title)).slice(0, 8);
