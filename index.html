@@ -189,7 +189,12 @@ blockquote.q { margin: 0; padding: 14px 0 14px 18px; border-left: 3px solid var(
 .check input { margin-top: 5px; width: 17px; height: 17px; accent-color: var(--ok); flex-shrink: 0; }
 .check .when { color: var(--muted); font-size: 14px; }
 .check .do { font-size: 16px; font-weight: 500; }
-.check.done .do { text-decoration: line-through; color: var(--faint); }
+.check .do span { background: linear-gradient(currentColor, currentColor) no-repeat 0 58% / 0 1.5px; -webkit-box-decoration-break: clone; box-decoration-break: clone; transition: color 0.25s; }
+.check.done .do { color: var(--faint); }
+.check.done .do span { background-size: 100% 1.5px; }
+.check.just .do span { animation: strike 0.35s ease-out both; }
+.check.just input { animation: pop 0.3s ease-out; }
+@keyframes strike { from { background-size: 0 1.5px; } to { background-size: 100% 1.5px; } }
 .prio { font-size: 12px; font-weight: 600; color: var(--bad); }
 .progress { height: 4px; background: var(--sunk); border-radius: 2px; overflow: hidden; margin: 6px 0 14px; }
 .progress > div { height: 100%; background: var(--ok); transition: width 0.3s; }
@@ -312,6 +317,40 @@ label.f small { font-weight: 400; color: var(--muted); }
 .mic.rec-on { color: var(--bad); border-color: var(--bad); animation: pulse 1.2s ease-in-out infinite; }
 @keyframes pulse { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--bad) 18%, transparent); } }
 .no-mic .mic { display: none !important; }
+/* Motion: only in answer to what you do, plus the highlighter on open. Disabled by prefers-reduced-motion. */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideIn { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+@keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.3); } 100% { transform: scale(1); } }
+@keyframes dlgIn { from { opacity: 0; transform: translateY(8px) scale(0.985); } to { opacity: 1; transform: none; } }
+@keyframes toastIn { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@keyframes hlDraw { from { background-size: 0% 100%; } to { background-size: 100% 100%; } }
+@keyframes blink { 0%, 80%, 100% { opacity: 0.25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@keyframes wave { 0%, 100% { transform: scaleY(0.35); } 50% { transform: scaleY(1); } }
+@keyframes leave { to { opacity: 0; transform: translateX(-10px); height: 0; padding-top: 0; padding-bottom: 0; margin: 0; } }
+.panel.enter { animation: fadeUp 0.22s ease-out; }
+.msg.enter { animation: fadeUp 0.25s ease-out both; }
+.msg.user.enter { animation-duration: 0.18s; }
+.review.enter { animation: slideIn 0.28s cubic-bezier(.2,.8,.2,1); }
+.review .atext { animation: fadeUp 0.25s ease-out; }
+.star.pop svg { animation: pop 0.3s ease-out; }
+dialog[open] { animation: dlgIn 0.2s ease-out; }
+dialog[open]::backdrop { animation: fadeIn 0.2s ease-out; }
+.toast:not([hidden]) { animation: toastIn 0.22s ease-out; }
+.thesis .hl { background-repeat: no-repeat; background-size: 100% 100%; }
+.thesis .hl.draw { animation: hlDraw 0.9s cubic-bezier(.3,.7,.2,1) 0.15s both; }
+.libitem.leaving { animation: leave 0.18s ease-in forwards; overflow: hidden; }
+.msg.thinking { display: inline-flex; align-items: center; gap: 10px; color: var(--muted); }
+.dots { display: inline-flex; gap: 4px; }
+.dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--faint); animation: blink 1.2s ease-in-out infinite; }
+.dots i:nth-child(2) { animation-delay: 0.15s; }
+.dots i:nth-child(3) { animation-delay: 0.3s; }
+.shimmer { font-weight: 500; background: linear-gradient(90deg, var(--muted) 0%, var(--muted) 40%, var(--ink) 50%, var(--muted) 60%, var(--muted) 100%) 0 0 / 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shimmer 1.8s linear infinite; }
+.wave { display: inline-flex; align-items: center; gap: 2px; height: 14px; margin-right: 8px; vertical-align: -2px; }
+.wave i { width: 3px; height: 100%; border-radius: 2px; background: currentColor; transform-origin: center; animation: wave 0.9s ease-in-out infinite; }
+.wave i:nth-child(2) { animation-delay: 0.12s; } .wave i:nth-child(3) { animation-delay: 0.24s; } .wave i:nth-child(4) { animation-delay: 0.36s; } .wave i:nth-child(5) { animation-delay: 0.48s; }
+.hf-status { display: flex; align-items: center; }
 .toast-act { color: var(--hl); font-weight: 700; padding: 4px 8px; border-radius: 6px; }
 .toast-act:hover { background: rgba(255,255,255,0.1); }
 .toast[hidden] { display: none; }
@@ -1261,7 +1300,9 @@ function renderReview(containerId) {
     icons(); return;
   }
   const c = lookup.get(s.queue[0]);
-  box.innerHTML = `<div class="review">
+  const fresh = box.dataset.cardKey !== c.key || box.dataset.seq !== String(s.seq || 0);
+  box.dataset.cardKey = c.key; box.dataset.seq = String(s.seq || 0);
+  box.innerHTML = `<div class="review${fresh ? ' enter' : ''}">
     <div class="meta"><span>${s.queue.length} left</span>${s.scope === 'all' ? `<button class="btn btn-quiet btn-sm" data-action="open-video" data-vid="${esc(c.video.id)}">${esc(c.video.title)}</button>` : ''}${tsBtn(c.card)}${c.rec ? '' : '<span class="origin">New</span>'}
       <button class="btn btn-sm hf-btn ${state.handsFree === containerId ? 'on' : ''}" data-action="hands-free" data-box="${containerId}" aria-pressed="${state.handsFree === containerId}" title="Read cards aloud and grade by voice"><i data-lucide="${state.handsFree === containerId ? 'square' : 'headphones'}"></i>${state.handsFree === containerId ? 'Stop hands-free' : 'Hands-free'}</button></div>
     ${state.handsFree === containerId ? '<div class="hf-status" role="status" aria-live="polite"></div>' : ''}
@@ -1275,6 +1316,7 @@ function renderReview(containerId) {
 function gradeCard(grade, boxId) {
   const s = state.session; if (!s || !s.queue.length) return;
   const key = s.queue.shift();
+  s.seq = (s.seq || 0) + 1; // so a repeated card still animates in
   if (!s.practice) {
     const prev = state.srs[key];
     state.srs[key] = schedule(prev, grade);
@@ -1431,7 +1473,12 @@ function gradeFromSpeech(heard) {
 /* ---------- Hands-free review ---------- */
 let hfRun = 0;
 const THINK_MS = 6000;
-function setHfStatus(boxId, text) { const el = $(boxId)?.querySelector('.hf-status'); if (el) el.textContent = text; }
+const WAVE = '<span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>';
+function setHfStatus(boxId, text) {
+  const el = $(boxId)?.querySelector('.hf-status'); if (!el) return;
+  const live = /^(Reading|Listening)/.test(text);
+  el.innerHTML = `${live ? WAVE : ''}<span>${esc(text)}</span>`; el.classList.toggle('live', live);
+}
 function startHandsFree(boxId) {
   state.handsFree = boxId; hfRun++;
   renderReview(boxId);
@@ -1495,10 +1542,10 @@ function renderRecapBar() {
   const r = state.recap && state.recap.id === v.id ? state.recap : null;
   let inner;
   if (!r) inner = `<button class="btn btn-sm" data-action="recap-make"><i data-lucide="headphones"></i>Listen to a ${v.isShort ? 'short' : 'two-minute'} recap</button>`;
-  else if (r.status === 'working') inner = `<span class="status"><span class="spin"></span>${esc(r.msg)}</span>`;
+  else if (r.status === 'working') inner = `<span class="status">${/Recording/.test(r.msg) ? WAVE : '<span class="spin"></span>'}${esc(r.msg)}</span>`;
   else if (r.status === 'error') inner = `<span class="status err">${esc(r.msg)}</span><button class="btn btn-sm" data-action="recap-make">Try again</button>`;
   else if (r.url) inner = `<audio controls src="${r.url}" id="recap-audio"></audio><a class="btn btn-sm btn-icon" href="${r.url}" download="${esc((v.title || 'recap').slice(0, 60))}.wav" title="Download recap" aria-label="Download recap"><i data-lucide="download"></i></a><button class="btn btn-sm btn-icon" data-action="recap-redo" title="Write a new recap" aria-label="Write a new recap"><i data-lucide="refresh-cw"></i></button>`;
-  else inner = `<button class="btn btn-sm" data-action="recap-browser">${r.playing ? '<i data-lucide="square"></i>Stop' : '<i data-lucide="play"></i>Play recap'}</button><span class="sec-note" style="margin:0;font-size:13px">Browser voice. Choose the Gemini voice in settings for a natural voice you can download.</span>`;
+  else inner = `<button class="btn btn-sm" data-action="recap-browser">${r.playing ? '<i data-lucide="square"></i>Stop' : '<i data-lucide="play"></i>Play recap'}</button>${r.playing ? `<span class="status live">${WAVE}</span>` : ''}<span class="sec-note" style="margin:0;font-size:13px">Browser voice. Choose the Gemini voice in settings for a natural voice you can download.</span>`;
   box.innerHTML = inner; icons();
 }
 async function makeRecap(fresh = false) {
@@ -1591,6 +1638,7 @@ function openVideo(id, tab) {
   state.current = v; state.insightFilter = 'all'; state.linkFilter = 'all';
   if (tab) state.tab = tab;
   ls.set('td_last', id);
+  state.drawThesis = true;
   setView('video'); renderVideo(); renderLibrary();
 }
 function renderVideo() {
@@ -1622,7 +1670,11 @@ function setTab(tab) {
   if (tab !== state.tab) { stopHandsFree(); stopDictation(); }
   state.tab = tab;
   document.querySelectorAll('.tab').forEach((b) => b.setAttribute('aria-selected', b.dataset.tab === tab));
-  document.querySelectorAll('.panel').forEach((p) => (p.hidden = p.id !== `panel-${tab}`));
+  document.querySelectorAll('.panel').forEach((p) => {
+    const show = p.id === `panel-${tab}`;
+    if (show && p.hidden) { p.classList.remove('enter'); void p.offsetWidth; p.classList.add('enter'); }
+    p.hidden = !show;
+  });
 }
 
 function renderUnderstand() {
@@ -1631,7 +1683,8 @@ function renderUnderstand() {
   const ins = v.insights.filter((i) => state.insightFilter === 'all' || (state.insightFilter === 'starred' ? stars[i.id] : i.category === state.insightFilter));
   const html = [`<div class="recap-bar" id="recap-bar"></div>`];
   if (v.notesOnSource.length) html.push(`<div class="sec-note" style="border-left:3px solid var(--rule);padding-left:12px">${v.notesOnSource.map(esc).join('<br>')}</div>`);
-  if (v.coreThesis) html.push(`<p class="thesis"><span class="hl">${esc(v.coreThesis)}</span></p>`);
+  if (v.coreThesis) html.push(`<p class="thesis"><span class="hl${state.drawThesis ? ' draw' : ''}">${esc(v.coreThesis)}</span></p>`);
+  state.drawThesis = false;
   if (v.summary) html.push(`<div class="prose"><p>${esc(v.summary)}</p></div>`);
 
   if (v.shifts.length) {
@@ -1644,7 +1697,7 @@ function renderUnderstand() {
     if (cats.length > 1 || Object.keys(stars).length) {
       html.push(`<div class="chips">${[['all', 'All'], ['starred', 'Starred'], ...cats.map((c) => [c, c])].map(([k, l]) => `<button class="chip" data-action="insight-filter" data-k="${esc(k)}" aria-pressed="${state.insightFilter === k}">${esc(l)}</button>`).join('')}</div>`);
     }
-    html.push(`<div class="list">${ins.map((i) => `<div class="row"><div class="row-head">${tsBtn(i)}<span class="cat">${esc(i.category)}</span><button class="star ${stars[i.id] ? 'on' : ''}" data-action="star" data-id="${esc(i.id)}" aria-label="${stars[i.id] ? 'Unstar' : 'Star'} insight" aria-pressed="${!!stars[i.id]}"><i data-lucide="star"></i></button></div><h3>${esc(i.title)}</h3><p class="body">${esc(i.body)}</p></div>`).join('') || '<p class="sec-note">No insights match this filter.</p>'}</div>`);
+    html.push(`<div class="list">${ins.map((i) => `<div class="row"><div class="row-head">${tsBtn(i)}<span class="cat">${esc(i.category)}</span><button class="star ${stars[i.id] ? 'on' : ''}${state.justStarred === i.id ? ' pop' : ''}" data-action="star" data-id="${esc(i.id)}" aria-label="${stars[i.id] ? 'Unstar' : 'Star'} insight" aria-pressed="${!!stars[i.id]}"><i data-lucide="star"></i></button></div><h3>${esc(i.title)}</h3><p class="body">${esc(i.body)}</p></div>`).join('') || '<p class="sec-note">No insights match this filter.</p>'}</div>`);
   }
   if (v.frameworks.length) {
     html.push(`<h2 class="sec">Frameworks and mental models<span class="sec-n">${v.frameworks.length}</span></h2><div class="list">${v.frameworks.map((f) => `<div class="row"><h3>${esc(f.name)}</h3><p class="body">${esc(f.desc)}</p></div>`).join('')}</div>`);
@@ -1671,7 +1724,7 @@ function renderAct() {
   const html = [];
   if (v.playbook.length) {
     html.push(`<h2 class="sec">Playbook</h2><p class="sec-note">${done} of ${v.playbook.length} done</p><div class="progress"><div style="width:${pct}%"></div></div><div>`);
-    v.playbook.forEach((p) => html.push(`<label class="check ${checks[p.id] ? 'done' : ''}"><input type="checkbox" data-action="check" data-id="${esc(p.id)}" ${checks[p.id] ? 'checked' : ''} /><div style="flex:1">${p.when ? `<div class="when">When ${esc(p.when.replace(/^when\s+/i, ''))}</div>` : ''}<div class="do">${esc(p.do)}</div><div class="row-head" style="margin:4px 0 0">${p.priority === 'High' ? '<span class="prio">High priority</span>' : ''}${tsBtn(p)}</div></div></label>`));
+    v.playbook.forEach((p) => html.push(`<label class="check ${checks[p.id] ? 'done' : ''}${state.justChecked === p.id ? ' just' : ''}"><input type="checkbox" data-action="check" data-id="${esc(p.id)}" ${checks[p.id] ? 'checked' : ''} /><div style="flex:1">${p.when ? `<div class="when">When ${esc(p.when.replace(/^when\s+/i, ''))}</div>` : ''}<div class="do"><span>${esc(p.do)}</span></div><div class="row-head" style="margin:4px 0 0">${p.priority === 'High' ? '<span class="prio">High priority</span>' : ''}${tsBtn(p)}</div></div></label>`));
     html.push('</div>');
   }
   if (v.code.length) {
@@ -1737,6 +1790,7 @@ function renderMarkdown(src) {
     h = h.replace(/(^|\s)(https?:\/\/[^\s<]+[^\s<.,;:!?)])/g, (m, pre, u) => { const su = safeUrl(u.replace(/&amp;/g, '&')); return su ? `${pre}<a href="${esc(su)}" target="_blank" rel="noopener noreferrer">${u}</a>` : m; });
     h = h.replace(/\[(\d{1,2}:\d{2}(?::\d{2})?)\]/g, (_, t) => `<button class="ts" data-seek="${parseTs(t)}"><i data-lucide="play"></i>${t}</button>`);
     h = h.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*\w])\*([^*\n]+)\*(?!\w)/g, '$1<em>$2</em>');
+    h = h.replace(/(^|[\s(])_([^_\n]+?)_(?=$|[\s).,!?:;])/g, '$1<em>$2</em>'); // _italic_, but not snake_case
     return h.replace(/\u0001C(\d+)\u0001/g, (_, i) => `<code>${esc(codes[i])}</code>`);
   };
   const out = []; let list = null, para = [];
@@ -1775,11 +1829,15 @@ function renderAsk() {
   document.querySelectorAll('[data-action="ask-mode"]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.mode === mode));
   $('ask-note').textContent = ASK_MODES[mode].note;
   $('ask-input').placeholder = ASK_MODES[mode].placeholder;
-  $('chat').innerHTML = (msgs.length ? msgs : [{ role: 'bot', text: `Ask anything about "${v.title}".` }]).map((m) => {
-    if (m.role === 'user') return `<div class="msg user">${esc(m.text)}</div>`;
+  const shown = (msgs.length ? msgs : [{ role: 'bot', text: `Ask anything about "${v.title}".` }]).filter((m) => !m.thinking || state.busy);
+  const animateFrom = shown.length - (state.askAnimate || 0); state.askAnimate = 0;
+  $('chat').innerHTML = shown.map((m, i) => {
+    const enter = i >= animateFrom ? ' enter' : '';
+    if (m.role === 'user') return `<div class="msg user${enter}">${esc(m.text)}</div>`;
+    if (m.thinking) return `<div class="msg bot thinking${enter}" role="status"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="shimmer">${m.mode === 'web' ? 'Searching the web' : 'Thinking'}</span></div>`;
     const meta = m.mode ? `<div class="msg-meta"><span class="origin ${m.mode === 'web' ? 'web' : 'video'}">${ASK_MODES[m.mode].label}</span></div>` : '';
     const src = arr(m.sources).length ? `<div class="sources"><span class="origin web">Sources</span>${m.sources.map((s) => `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.title)}</a>`).join('')}</div>` : '';
-    return `<div class="msg bot md">${meta}${renderMarkdown(m.text)}${src}</div>`;
+    return `<div class="msg bot md${enter}">${meta}${renderMarkdown(m.text)}${src}</div>`;
   }).join('');
   $('ask-suggest').innerHTML = msgs.length ? '' : ASK_MODES[mode].sugg.map((s) => `<button class="chip" data-action="ask-suggest">${esc(s)}</button>`).join('');
   icons();
@@ -1788,9 +1846,10 @@ async function ask(q) {
   const v = state.current; q = q.trim(); if (!v || !q || state.busy) return;
   const mode = ASK_MODES[state.askMode] ? state.askMode : 'web';
   const hist = state.chats[v.id] ||= [];
-  hist.push({ role: 'user', text: q }); renderAsk();
+  hist.push({ role: 'user', text: q });
   state.busy = true;
-  hist.push({ role: 'bot', text: mode === 'web' ? '_Searching the web…_' : '_Thinking…_' }); renderAsk();
+  state.askAnimate = 2;
+  hist.push({ role: 'bot', thinking: true, mode, text: '' }); renderAsk();
   let reply = { role: 'bot', mode, text: '', sources: [] };
   if (state.apiKey) {
     try {
@@ -1815,7 +1874,7 @@ async function ask(q) {
     } catch (e) { reply = { role: 'bot', mode: 'video', text: `${e.message}\n\nFrom the analysis instead:\n\n${offlineAnswer(v, q)}`, sources: [] }; }
   } else reply = { role: 'bot', mode: 'video', text: `${offlineAnswer(v, q)}\n\n_Add a Gemini key in settings for full answers${mode === 'web' ? ' and web search' : ''}._`, sources: [] };
   hist[hist.length - 1] = reply;
-  state.busy = false; persist('chats'); renderAsk();
+  state.busy = false; state.askAnimate = 1; persist('chats'); renderAsk();
   if (state.spokenAsk) { state.spokenAsk = false; speak(reply.text); } // answer aloud when the question was spoken
 }
 function offlineAnswer(v, q) {
@@ -2211,10 +2270,15 @@ document.addEventListener('click', (e) => {
     case 'queue-open': $('dlg-queue').close(); openVideo(el.dataset.vid); break;
     case 'export': doExport(el.dataset.kind); break;
     case 'reanalyze': openAnalyze(v.url, v); break;
-    case 'delete-video': deleteVideo(el.dataset.vid || v.id); break;
+    case 'delete-video': {
+      const item = el.closest('.libitem');
+      if (item && !matchMedia('(prefers-reduced-motion: reduce)').matches) { item.classList.add('leaving'); setTimeout(() => deleteVideo(el.dataset.vid), 180); }
+      else deleteVideo(el.dataset.vid || v.id);
+      break;
+    }
     case 'insight-filter': state.insightFilter = el.dataset.k; renderUnderstand(); break;
     case 'link-filter': state.linkFilter = el.dataset.k; renderAct(); break;
-    case 'star': { const s = state.stars[v.id] ||= {}; s[el.dataset.id] = !s[el.dataset.id]; if (!s[el.dataset.id]) delete s[el.dataset.id]; persist('stars'); renderUnderstand(); break; }
+    case 'star': { const s = state.stars[v.id] ||= {}; s[el.dataset.id] = !s[el.dataset.id]; if (!s[el.dataset.id]) delete s[el.dataset.id]; state.justStarred = s[el.dataset.id] ? el.dataset.id : null; persist('stars'); renderUnderstand(); state.justStarred = null; break; }
     case 'copy-quote': copyText(el.dataset.text); break;
     case 'copy-code': copyText(v.code[Number(el.dataset.i)].snippet, 'Command copied'); break;
     case 'quiz': { (state.quiz[v.id] ||= {})[el.dataset.q] = Number(el.dataset.o); persist('quiz'); renderRetain(); break; }
@@ -2243,7 +2307,8 @@ document.addEventListener('change', (e) => {
   if (el.dataset.action === 'check') {
     const c = state.checks[state.current.id] ||= {};
     if (el.checked) c[el.dataset.id] = true; else delete c[el.dataset.id];
-    persist('checks'); renderAct(); updateTabCounts();
+    state.justChecked = el.checked ? el.dataset.id : null;
+    persist('checks'); renderAct(); updateTabCounts(); state.justChecked = null;
   } else if (el.dataset.action === 'compare-pick') {
     if (el.checked) state.compareSel.add(el.dataset.vid); else state.compareSel.delete(el.dataset.vid);
     renderLibrary();
@@ -2306,6 +2371,11 @@ $('note-form').addEventListener('submit', (e) => {
   $('note-text').value = ''; $('note-time').value = ''; delete $('note-time').dataset.manual; $('note-time-hint').textContent = 'Filled from the player';
 });
 window.matchMedia('(max-width: 1180px)').addEventListener('change', placeSide);
+// One-off animations clear themselves, so they don't replay when a hidden tab is shown again.
+document.addEventListener('animationend', (e) => {
+  const el = e.target.closest('.enter, .draw, .just, .pop');
+  if (el && !el.classList.contains('leaving')) el.classList.remove('enter', 'draw', 'just', 'pop');
+});
 
 /* ============================== Init ============================== */
 async function migrateLegacy() {
