@@ -26,6 +26,7 @@ jobs:
         run: |
           mkdir _site
           cp index.html landing.html _site/
+          cp -r assets _site/
           (cd extension && zip -qr ../_site/annotated-extension.zip .)
           touch _site/.nojekyll
       - uses: actions/configure-pages@v5
