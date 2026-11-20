@@ -55,6 +55,15 @@ Answers are Markdown, rendered by `renderMarkdown()`. It escapes everything firs
 
 The API key is sent in the `x-goog-api-key` header. The available model list is loaded from `GET /v1beta/models`.
 
+## Voice
+- **Spoken recap (Understand tab):** Gemini writes a script for listening, then text-to-speech records it.
+  - Model `gemini-3.8-flash-tts` with `speechConfig.voiceConfig.voice`. The older `prebuiltVoiceConfig` format is the fallback, then any `*tts*` model the key lists.
+  - Raw PCM output is wrapped as WAV. The script is cached on the video (`recapScript`) and the audio in IndexedDB (`audio:<id>`).
+  - With the browser voice, `speechSynthesis` reads the script instead.
+- **Hands-free review (Today and Retain):** reads the question, pauses 6 seconds, reads the answer, then listens for "again", "hard", "good" or "easy" (also "say that again" and "stop"). Tapping a grade also continues. Esc stops. The next card's audio is fetched ahead of time.
+- **Dictation:** mic buttons in Ask (one phrase, sent automatically, answer read aloud) and Notes (continuous, captures the player time). Uses the browser's speech recognition. Hidden where unsupported, which includes Firefox.
+- **Settings:** `td_voice` (`gemini` or `browser`) and `td_voice_name` (Kore, Puck, Charon, Aoede, Fenrir, Leda, Orus, Zephyr).
+
 ## Storage
 IndexedDB database `annotated`, store `kv`. Keys: `library`, `notes`, `checks`, `stars`, `srs`, `chats`, `quiz`, `reviewLog`, `seeded`.
 
