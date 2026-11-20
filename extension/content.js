@@ -1,6 +1,6 @@
 (function () {
   const BTN_ID = 'annotated-launch-btn';
-  const APP_BASE = 'https://annotated.app/'; // Placeholder: your deployed index.html. It reads ?url= and starts the analysis.
+  const APP_BASE = 'https://m4roon3d.github.io/annotated/'; // Deployed app (GitHub Pages). It reads ?url= and starts the analysis.
   // YouTube changes its markup often, so try several known spots for the action bar.
   const ANCHORS = ['#top-level-buttons-computed', 'ytd-watch-metadata #actions-inner #menu', 'ytd-watch-metadata #actions', '#above-the-fold #top-row'];
 

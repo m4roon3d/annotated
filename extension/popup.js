@@ -1,4 +1,4 @@
-const APP_BASE = 'https://annotated.app/'; // Placeholder. Keep in sync with content.js
+const APP_BASE = 'https://m4roon3d.github.io/annotated/'; // Keep in sync with content.js
 
 document.getElementById('btn-open').addEventListener('click', async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
