@@ -192,6 +192,20 @@ details.how summary { cursor: pointer; }
 .msg { max-width: 88%; padding: 12px 14px; border-radius: var(--r-md); font-size: 15px; line-height: 1.6; white-space: pre-wrap; }
 .msg.user { align-self: flex-end; background: var(--ink); color: var(--paper); }
 .msg.bot { align-self: flex-start; background: var(--surface); border: 1px solid var(--rule); }
+.askmode { display: flex; gap: 6px; margin: 6px 0 6px; }
+.msg.bot.md { white-space: normal; max-width: 100%; }
+.md p { margin: 0 0 10px; }
+.md p:last-child { margin-bottom: 0; }
+.md h4 { font-size: 15px; font-weight: 700; margin: 16px 0 6px; }
+.md h4:first-child { margin-top: 0; }
+.md ul, .md ol { margin: 0 0 10px; padding-left: 22px; }
+.md li { margin: 4px 0; }
+.md code { font: 13px var(--code); background: var(--sunk); padding: 1px 5px; border-radius: 4px; }
+.md pre code { background: none; padding: 0; }
+.md .codebox { margin: 8px 0 12px; }
+.md a { word-break: break-word; }
+.msg-meta { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.msg .sources { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--rule); }
 .composer { display: flex; gap: 8px; position: sticky; bottom: 0; background: var(--paper); padding: 10px 0; }
 .input, textarea.input, select.input { width: 100%; padding: 9px 12px; border-radius: var(--r-sm); border: 1px solid var(--rule); background: var(--surface); font-size: 15px; }
 textarea.input { resize: vertical; min-height: 80px; line-height: 1.5; }
@@ -362,7 +376,11 @@ label.f small { font-weight: 400; color: var(--muted); }
       <section class="panel" id="panel-retain" role="tabpanel"></section>
       <section class="panel" id="panel-ask" role="tabpanel">
         <h2 class="sec">Ask about this video</h2>
-        <p class="sec-note">Answers use the transcript and the analysis. Timestamps in answers are clickable.</p>
+        <div class="askmode" role="group" aria-label="Where answers come from">
+          <button class="chip" data-action="ask-mode" data-mode="video">This video</button>
+          <button class="chip" data-action="ask-mode" data-mode="web">Video + web</button>
+        </div>
+        <p class="sec-note" id="ask-note"></p>
         <div class="chat" id="chat"></div>
         <div class="chips" id="ask-suggest"></div>
         <form class="composer" id="ask-form">
@@ -1272,36 +1290,98 @@ function renderRetain() {
   renderReview('video-review');
 }
 
+// Small, safe Markdown renderer: everything is escaped first, then a fixed set of patterns is turned into HTML.
+function renderMarkdown(src) {
+  const blocks = [];
+  const text = String(src || '').replace(/```([\w+#.-]*)[^\n]*\n([\s\S]*?)```/g, (_, lang, code) => {
+    blocks.push({ lang, code: code.replace(/\n$/, '') }); return `\n\u0000B${blocks.length - 1}\u0000\n`;
+  });
+  const inline = (raw) => {
+    const codes = [];
+    let h = raw.replace(/`([^`\n]+)`/g, (_, c) => { codes.push(c); return `\u0001C${codes.length - 1}\u0001`; });
+    h = esc(h);
+    h = h.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (m, t, u) => { const su = safeUrl(u.replace(/&amp;/g, '&')); return su ? `<a href="${esc(su)}" target="_blank" rel="noopener noreferrer">${t}</a>` : t; });
+    h = h.replace(/(^|\s)(https?:\/\/[^\s<]+[^\s<.,;:!?)])/g, (m, pre, u) => { const su = safeUrl(u.replace(/&amp;/g, '&')); return su ? `${pre}<a href="${esc(su)}" target="_blank" rel="noopener noreferrer">${u}</a>` : m; });
+    h = h.replace(/\[(\d{1,2}:\d{2}(?::\d{2})?)\]/g, (_, t) => `<button class="ts" data-seek="${parseTs(t)}"><i data-lucide="play"></i>${t}</button>`);
+    h = h.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*\w])\*([^*\n]+)\*(?!\w)/g, '$1<em>$2</em>');
+    return h.replace(/\u0001C(\d+)\u0001/g, (_, i) => `<code>${esc(codes[i])}</code>`);
+  };
+  const out = []; let list = null, para = [];
+  const flushPara = () => { if (para.length) { out.push(`<p>${para.map(inline).join('<br>')}</p>`); para = []; } };
+  const flushList = () => {
+    if (!list) return;
+    out.push(`<${list.type}${list.type === 'ol' && list.start > 1 ? ` start="${list.start}"` : ''}>${list.items.map((i) => `<li>${inline(i)}</li>`).join('')}</${list.type}>`);
+    list = null;
+  };
+  for (const raw of text.split('\n')) {
+    const line = raw.trimEnd(); let m;
+    if ((m = line.match(/^\u0000B(\d+)\u0000$/))) {
+      flushPara(); flushList(); const b = blocks[m[1]];
+      out.push(`<div class="codebox"><div class="codebox-head"><span>${esc(b.lang || 'code')}</span><button class="btn btn-sm" data-action="copy-chat-code" data-code="${esc(b.code)}"><i data-lucide="copy"></i>Copy</button></div><pre><code>${esc(b.code)}</code></pre></div>`);
+      continue;
+    }
+    if (!line.trim()) { flushPara(); if (list && list.type === 'ul') flushList(); continue; }
+    if ((m = line.match(/^#{1,6}\s+(.*)/))) { flushPara(); flushList(); out.push(`<h4>${inline(m[1].replace(/\*\*/g, ''))}</h4>`); continue; }
+    if ((m = line.match(/^\s*[-*•]\s+(.*)/))) { flushPara(); if (!list || list.type !== 'ul') { flushList(); list = { type: 'ul', items: [] }; } list.items.push(m[1]); continue; }
+    if ((m = line.match(/^\s*(\d+)[.)]\s+(.*)/))) { flushPara(); if (!list || list.type !== 'ol') { flushList(); list = { type: 'ol', items: [], start: Number(m[1]) }; } list.items.push(m[2]); continue; }
+    if (list && /^\s{2,}\S/.test(raw)) { list.items[list.items.length - 1] += ' ' + line.trim(); continue; }
+    flushList(); para.push(line);
+  }
+  flushPara(); flushList();
+  return out.join('');
+}
+
+const ASK_MODES = {
+  video: { note: 'Answers come only from this video. Timestamps are clickable.', placeholder: 'What did they say about…', label: 'From the video',
+    sugg: ['What should I try first?', 'Summarize the steps they showed', 'Explain the hardest part simply'] },
+  web: { note: 'Answers start from the video and fill in current docs and full steps from the web. Sources are listed under each answer.', placeholder: 'How do I do this today, step by step?', label: 'Video + web',
+    sugg: ['How do I set this up today, step by step?', "What's changed since this video was made?", 'What are the prerequisites?'] },
+};
 function renderAsk() {
-  const v = state.current, msgs = state.chats[v.id] || [];
+  const v = state.current, msgs = state.chats[v.id] || [], mode = ASK_MODES[state.askMode] ? state.askMode : 'web';
+  document.querySelectorAll('[data-action="ask-mode"]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.mode === mode));
+  $('ask-note').textContent = ASK_MODES[mode].note;
+  $('ask-input').placeholder = ASK_MODES[mode].placeholder;
   $('chat').innerHTML = (msgs.length ? msgs : [{ role: 'bot', text: `Ask anything about "${v.title}".` }]).map((m) => {
-    const body = esc(m.text).replace(/\[(\d{1,2}:\d{2}(?::\d{2})?)\]/g, (_, t) => `<button class="ts" data-seek="${parseTs(t)}"><i data-lucide="play"></i>${t}</button>`);
-    return `<div class="msg ${m.role === 'user' ? 'user' : 'bot'}">${body}</div>`;
+    if (m.role === 'user') return `<div class="msg user">${esc(m.text)}</div>`;
+    const meta = m.mode ? `<div class="msg-meta"><span class="origin ${m.mode === 'web' ? 'web' : 'video'}">${ASK_MODES[m.mode].label}</span></div>` : '';
+    const src = arr(m.sources).length ? `<div class="sources"><span class="origin web">Sources</span>${m.sources.map((s) => `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.title)}</a>`).join('')}</div>` : '';
+    return `<div class="msg bot md">${meta}${renderMarkdown(m.text)}${src}</div>`;
   }).join('');
-  const sugg = ['What should I try first?', 'What are the prerequisites?', 'Explain the hardest part simply'];
-  $('ask-suggest').innerHTML = msgs.length ? '' : sugg.map((s) => `<button class="chip" data-action="ask-suggest">${esc(s)}</button>`).join('');
+  $('ask-suggest').innerHTML = msgs.length ? '' : ASK_MODES[mode].sugg.map((s) => `<button class="chip" data-action="ask-suggest">${esc(s)}</button>`).join('');
   icons();
 }
 async function ask(q) {
   const v = state.current; q = q.trim(); if (!v || !q || state.busy) return;
+  const mode = ASK_MODES[state.askMode] ? state.askMode : 'web';
   const hist = state.chats[v.id] ||= [];
   hist.push({ role: 'user', text: q }); renderAsk();
   state.busy = true;
-  hist.push({ role: 'bot', text: 'Thinking…' }); renderAsk();
-  let answer;
+  hist.push({ role: 'bot', text: mode === 'web' ? '_Searching the web…_' : '_Thinking…_' }); renderAsk();
+  let reply = { role: 'bot', mode, text: '', sources: [] };
   if (state.apiKey) {
     try {
-      const context = JSON.stringify({ title: v.title, channel: v.channel, coreThesis: v.coreThesis, summary: v.summary, insights: v.insights.map((i) => `[${i.timestamp}] ${i.title}: ${i.body}`), playbook: v.playbook.map((p) => `${p.when ? 'When ' + p.when + ': ' : ''}${p.do}`), links: v.links.map((l) => `${l.title} ${l.url}`), caveats: v.caveats.map((c) => c.text) });
+      const context = JSON.stringify({ title: v.title, channel: v.channel, coreThesis: v.coreThesis, summary: v.summary, insights: v.insights.map((i) => `[${i.timestamp}] ${i.title}: ${i.body}`), playbook: v.playbook.map((p) => `${p.when ? 'When ' + p.when + ': ' : ''}${p.do}`), code: v.code.map((c) => `[${c.timestamp}] ${c.label}: ${c.snippet}`), links: v.links.map((l) => `${l.title} ${l.url}`), caveats: v.caveats.map((c) => c.text) });
       const transcript = v.transcript.map((t) => `[${t.timestamp}] ${t.text}`).join('\n').slice(0, 120000);
-      const system = `You answer questions about one YouTube video for ${LENSES[v.lens]}. Use the transcript and analysis below. Cite moments as [MM:SS]. If the video doesn't cover something, say so, then answer briefly from general knowledge and label it as such. Be concise; plain text, no markdown headings.\n\nAnalysis: ${context}${transcript ? `\n\nTranscript:\n${transcript}` : ''}`;
+      const format = 'Format in Markdown: start with a direct answer in one or two sentences, then use "### " headings only if the answer has parts, numbered lists for steps, and fenced code blocks with a language tag for every command, config or code. Keep it tight. No preamble.';
+      const system = mode === 'web'
+        ? `You help ${LENSES[v.lens]} who is learning from the YouTube video below. Give the most complete, correct and current answer you can. Use Google Search for official documentation, current versions and full step-by-step instructions: the video is context, not a limit. Cite moments from the video as [MM:SS]. Where current practice or versions differ from the video, say so plainly. Don't write URLs in the answer; sources are shown separately. Today is ${todayKey()}. ${format}`
+        : `You answer questions about one YouTube video for ${LENSES[v.lens]}, using only the video, its transcript and the analysis below. Cite moments as [MM:SS]. If the video doesn't cover something, say so in one sentence and suggest switching to "Video + web"; don't fill gaps from general knowledge. ${format}`;
       const contents = hist.slice(0, -2).slice(-10).map((m) => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] }));
       contents.push({ role: 'user', parts: [{ text: q }] });
-      const body = { systemInstruction: { parts: [{ text: system }] }, contents, generationConfig: { temperature: 0.3 } };
+      const sysText = `${system}\n\nVideo analysis: ${context}${transcript ? `\n\nTranscript:\n${transcript}` : ''}`;
+      const body = { systemInstruction: { parts: [{ text: sysText }] }, contents, generationConfig: { temperature: 0.3 } };
+      if (mode === 'web') body.tools = [{ google_search: {} }];
       if (!v.transcript.length) body.contents[0].parts.unshift({ file_data: { file_uri: v.url } });
-      answer = (await gemini(body)).text.trim() || 'Gemini returned an empty answer. Try rephrasing.';
-    } catch (e) { answer = `${e.message}\n\nFrom the analysis instead:\n${offlineAnswer(v, q)}`; }
-  } else answer = offlineAnswer(v, q) + '\n\n(Add a Gemini key for real answers.)';
-  hist[hist.length - 1] = { role: 'bot', text: answer };
+      const r = await gemini(body);
+      reply.text = r.text.trim() || 'Gemini returned an empty answer. Try rephrasing.';
+      const seen = new Set();
+      reply.sources = arr(r.grounding?.groundingChunks).map((c) => ({ title: str(c.web?.title, 80) || hostOf(c.web?.uri), url: safeUrl(c.web?.uri) }))
+        .filter((s) => s.url && !seen.has(s.title) && seen.add(s.title)).slice(0, 8);
+      if (mode === 'web' && !reply.sources.length) reply.text += '\n\n_No web sources came back for this answer, so treat anything not from the video as unverified._';
+    } catch (e) { reply = { role: 'bot', mode: 'video', text: `${e.message}\n\nFrom the analysis instead:\n\n${offlineAnswer(v, q)}`, sources: [] }; }
+  } else reply = { role: 'bot', mode: 'video', text: `${offlineAnswer(v, q)}\n\n_Add a Gemini key in settings for full answers${mode === 'web' ? ' and web search' : ''}._`, sources: [] };
+  hist[hist.length - 1] = reply;
   state.busy = false; persist('chats'); renderAsk();
 }
 function offlineAnswer(v, q) {
@@ -1554,6 +1634,8 @@ document.addEventListener('click', (e) => {
     case 'grade': gradeCard(Number(el.dataset.grade), el.dataset.box); if (state.view === 'video') { const due = dueQueue(v.id).length; const note = $('panel-retain').querySelector('.sec-note'); if (note) note.textContent = `${allCards(v.id).length} cards from this video, ${due} due now. They also appear in Today's review alongside your other videos.`; } break;
     case 'practice': startPractice(el.dataset.vid); renderReview(el.closest('#today-review') ? 'today-review' : 'video-review'); break;
     case 'ask-suggest': ask(el.textContent); break;
+    case 'ask-mode': state.askMode = el.dataset.mode; ls.set('td_ask_mode', state.askMode); renderAsk(); $('ask-input').focus(); break;
+    case 'copy-chat-code': copyText(el.dataset.code, 'Code copied'); break;
     case 'del-note': state.notes[v.id] = (state.notes[v.id] || []).filter((n) => n.id !== el.dataset.id); persist('notes'); renderNotes(); break;
     case 'pal-run': runPalette(Number(el.dataset.i)); break;
   }
@@ -1637,6 +1719,7 @@ async function init() {
   state.dark = ls.get('td_dark', null) === null ? window.matchMedia('(prefers-color-scheme: dark)').matches : ls.get('td_dark') === 'true';
   document.documentElement.classList.toggle('dark', state.dark);
   state.apiKey = ls.get('td_api_key', '');
+  state.askMode = ls.get('td_ask_mode', 'web') === 'video' ? 'video' : 'web';
   state.model = ls.get('td_model', 'gemini-3.8-flash');
   if (/^gemini-(1|2)\./.test(state.model) || state.model === 'gemini-4-carbon') { state.model = 'gemini-3.8-flash'; ls.set('td_model', state.model); }
   try { state.models = JSON.parse(ls.get('td_models', 'null')); } catch {}

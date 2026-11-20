@@ -26,6 +26,13 @@ Removed in v2: knowledge graph, clips and highlight reel, audio brief, lens call
 4. **Web check pass.** Uses `google_search`, without JSON mode, so Gemini returns `groundingMetadata`. The model replies in line format (`CAVEAT|…`, `READ|…`, `PREREQ|…`, `NEXT|…`). Each line's sources come from `groundingSupports` → `groundingChunks`. Items without a source are shown as **No source found**.
 5. `normalizeVideo()` validates and coerces everything, and also reads the v1 schema.
 
+## Ask
+Two source modes, remembered per browser (`td_ask_mode`, default `web`):
+- **This video:** answers only from the transcript and analysis; says so when the video doesn't cover something.
+- **Video + web:** adds `tools: [{ google_search: {} }]`. The video is context, not a limit. Sources come from `groundingMetadata.groundingChunks` and are shown under each answer.
+
+Answers are Markdown, rendered by `renderMarkdown()`. It escapes everything first, then handles headings, bold and italics, lists, inline code, fenced code blocks (with Copy buttons), http(s) links and `[MM:SS]` timestamps.
+
 The API key is sent in the `x-goog-api-key` header. The available model list is loaded from `GET /v1beta/models`.
 
 ## Storage
